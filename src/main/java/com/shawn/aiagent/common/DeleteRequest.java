@@ -1,4 +1,16 @@
 package com.shawn.aiagent.common;
 
-public class DeleteRequest {
+import java.io.Serializable;
+
+import lombok.Data;
+
+@Data
+public class DeleteRequest implements Serializable {
+
+    /**
+     * id
+     */
+    private Long id;
+
+    private static final long serialVersionUID = 1L;
 }
