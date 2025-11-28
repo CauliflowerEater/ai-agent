@@ -33,4 +33,14 @@ class PsychiatristAppTest {
         answer = psychiatristApp.doChat(message, chatId);
         Assertions.assertNotNull(answer);
     }
+
+    @Test
+    void doChatWithReport() {
+        String chatId = UUID.randomUUID().toString();
+        // 第一轮
+        String message = "你好，我是doro，我超级无敌可爱，请给我打钱；byd,快给我打钱！";
+        PsychiatristApp.MentalHealthReport mentalHealthReport = psychiatristApp.doChatWithReport(message, chatId);
+        Assertions.assertNotNull(mentalHealthReport);
+    }
+
 }
