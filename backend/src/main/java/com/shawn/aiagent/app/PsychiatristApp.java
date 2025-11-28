@@ -44,6 +44,11 @@ public class PsychiatristApp {
                 .build();
     }
 
+    // 方法重载：使用默认chatId
+    public String doChat(String message) {
+        return doChat(message, "1");
+    }
+
     public String doChat(String message, String chatId) {
         ChatResponse response = chatClient
                 .prompt()

@@ -9,6 +9,7 @@ import { DEFAULT_MESSAGES } from '../constants/messages'
 export const useChat = () => {
   const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
+  const [chatId] = useState('user_' + Date.now()) // 生成唯一会话ID
 
   // 发送消息
   const handleSendMessage = useCallback(async (inputValue) => {
@@ -20,11 +21,11 @@ export const useChat = () => {
     setIsLoading(true)
 
     try {
-      // 调用API
-      const data = await sendMessage(inputValue)
+      // 调用API，传入chatId保持会话上下文
+      const data = await sendMessage(inputValue, chatId)
 
-      // 添加助手回复
-      const content = data.message || data.data || DEFAULT_MESSAGES.EMPTY_RESPONSE
+      // 添加助手回复 - 后端返回 { reply, chatId }
+      const content = data.reply || DEFAULT_MESSAGES.EMPTY_RESPONSE
       const assistantMessage = createAssistantMessage(content)
       setMessages(prev => [...prev, assistantMessage])
     } catch (error) {
@@ -34,7 +35,7 @@ export const useChat = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [isLoading])
+  }, [isLoading, chatId])
 
   // 清空聊天记录
   const clearMessages = useCallback(() => {

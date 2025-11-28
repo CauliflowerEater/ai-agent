@@ -3,7 +3,8 @@ export const API_BASE_URL = '/api'
 
 // API端点
 export const API_ENDPOINTS = {
-  CHAT: '/chat',
+  CHAT: '/chat/send',
+  CHAT_TEST: '/chat/test',
   HEALTH: '/health',
 }
 
