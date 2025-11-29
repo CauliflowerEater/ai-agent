@@ -7,7 +7,6 @@ import com.shawn.aiagent.exception.ThrowUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
-import reactor.core.scheduler.Schedulers;
 
 import jakarta.annotation.Resource;
 
@@ -33,18 +32,16 @@ public class ChatService {
                 ErrorCode.PARAMS_ERROR, "消息不能为空");
 
         try {
-            // 调用PsychiatristApp的doChatStream方法
-            // 使用boundedElastic线程池处理可能的阻塞调用
-            Flux<String> chatFlux;
+            // 调用PsychiatristApp的doChat方法
             if (chatId != null && !chatId.trim().isEmpty()) {
-                chatFlux = psychiatristApp.doChatStream(message, chatId);
+                return psychiatristApp.doChatStream(message, chatId);
             } else {
-                chatFlux = psychiatristApp.doChatStream(message);
+                return psychiatristApp.doChatStream(message);
             }
-            
-            return chatFlux.subscribeOn(Schedulers.boundedElastic());
         } catch (Exception e) {
             log.error("聊天失败", e);
+            //检查异常的处理方式是否同统一；
+            //todo
             return Flux.error(new BusinessException(ErrorCode.SYSTEM_ERROR, "聊天失败：" + e.getMessage()));
         }
     }
