@@ -1,5 +1,4 @@
 import MessageItem from './MessageItem'
-import TypingIndicator from './TypingIndicator'
 import { DEFAULT_MESSAGES } from '../constants/messages'
 import './MessageList.css'
 
@@ -15,7 +14,6 @@ function MessageList({ messages, isLoading, scrollRef }) {
           <MessageItem key={message.id} message={message} />
         ))
       )}
-      {isLoading && <TypingIndicator />}
       <div ref={scrollRef} />
     </div>
   )

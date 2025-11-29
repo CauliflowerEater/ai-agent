@@ -7,7 +7,11 @@ function MessageItem({ message }) {
   return (
     <div className={`message ${message.role} ${message.isError ? 'error' : ''}`}>
       <div className="message-avatar">
-        {isUser ? '👤' : '🤖'}
+        {isUser ? (
+          '👤'
+        ) : (
+          <img src="/Cuty/Happy.png" alt="AI助手" className="avatar-image" />
+        )}
       </div>
       <div className="message-content">
         <div className="message-text">{message.content}</div>
