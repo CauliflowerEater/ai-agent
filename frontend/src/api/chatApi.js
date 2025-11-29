@@ -1,42 +1,76 @@
 import { API_BASE_URL, API_ENDPOINTS } from '../constants/api'
 
 /**
- * 发送聊天消息
+ * 发送聊天消息（SSE 流式）
  * @param {string} message - 用户消息
- * @param {string} chatId - 会话ID（可选）
- * @returns {Promise<Object>} 响应数据
+ * @param {string} chatId - 会话ID
+ * @param {Function} onChunk - 收到数据块的回调函数
+ * @param {Function} onComplete - 完成时的回调函数
+ * @param {Function} onError - 错误时的回调函数
+ * @returns {Function} 取消请求的函数
  */
-export const sendMessage = async (message, chatId = null) => {
-  try {
-    const requestBody = { message }
-    if (chatId) {
-      requestBody.chatId = chatId
-    }
+export const sendMessageStream = (message, chatId, onChunk, onComplete, onError) => {
+  const controller = new AbortController()
+  const signal = controller.signal
 
-    const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.CHAT}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody)
+  const requestBody = {
+    message,
+    chatId
+  }
+
+  fetch(`${API_BASE_URL}${API_ENDPOINTS.CHAT_STREAM}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(requestBody),
+    signal
+  })
+    .then(async response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder('utf-8')
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        
+        if (done) {
+          onComplete?.()
+          break
+        }
+
+        // 解码数据块
+        buffer += decoder.decode(value, { stream: true })
+        
+        // 处理 SSE 数据格式：data: xxx\n\n
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || '' // 保留未完成的行
+
+        for (const line of lines) {
+          if (line.startsWith('data:')) {
+            const data = line.slice(5).trim()
+            if (data) {
+              onChunk?.(data)
+            }
+          }
+        }
+      }
+    })
+    .catch(error => {
+      if (error.name === 'AbortError') {
+        console.log('请求已取消')
+      } else {
+        console.error('发送消息失败:', error)
+        onError?.(error)
+      }
     })
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
-    const result = await response.json()
-    
-    // 后端返回格式: { code: 0, data: { reply: "...", chatId: "..." }, message: "ok" }
-    if (result.code === 0 && result.data) {
-      return result.data // 返回 { reply, chatId }
-    } else {
-      throw new Error(result.message || '请求失败')
-    }
-  } catch (error) {
-    console.error('发送消息失败:', error)
-    throw error
-  }
+  // 返回取消函数
+  return () => controller.abort()
 }
 
 /**

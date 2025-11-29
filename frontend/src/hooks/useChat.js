@@ -1,17 +1,18 @@
-import { useState, useCallback } from 'react'
-import { sendMessage } from '../api/chatApi'
+import { useState, useCallback, useRef } from 'react'
+import { sendMessageStream } from '../api/chatApi'
 import { createUserMessage, createAssistantMessage } from '../utils/messageUtils'
 import { DEFAULT_MESSAGES } from '../constants/messages'
 
 /**
- * 聊天功能自定义Hook
+ * 聊天功能自定义Hook（SSE流式版本）
  */
 export const useChat = () => {
   const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [chatId] = useState('user_' + Date.now()) // 生成唯一会话ID
+  const cancelRequestRef = useRef(null)
 
-  // 发送消息
+  // 发送消息（SSE流式）
   const handleSendMessage = useCallback(async (inputValue) => {
     if (!inputValue.trim() || isLoading) return
 
@@ -20,26 +21,76 @@ export const useChat = () => {
     setMessages(prev => [...prev, userMessage])
     setIsLoading(true)
 
-    try {
-      // 调用API，传入chatId保持会话上下文
-      const data = await sendMessage(inputValue, chatId)
+    // 创建助手消息占位符
+    const assistantMessageId = 'assistant_' + Date.now()
+    const assistantMessage = createAssistantMessage('', false, assistantMessageId)
+    setMessages(prev => [...prev, assistantMessage])
 
-      // 添加助手回复 - 后端返回 { reply, chatId }
-      const content = data.reply || DEFAULT_MESSAGES.EMPTY_RESPONSE
-      const assistantMessage = createAssistantMessage(content)
-      setMessages(prev => [...prev, assistantMessage])
-    } catch (error) {
-      // 添加错误消息
-      const errorMessage = createAssistantMessage(DEFAULT_MESSAGES.ERROR, true)
-      setMessages(prev => [...prev, errorMessage])
-    } finally {
-      setIsLoading(false)
+    let accumulatedContent = ''
+
+    // 取消上一次请求（如果存在）
+    if (cancelRequestRef.current) {
+      cancelRequestRef.current()
     }
+
+    // 发送 SSE 流式请求
+    cancelRequestRef.current = sendMessageStream(
+      inputValue,
+      chatId,
+      // onChunk: 收到数据块
+      (chunk) => {
+        accumulatedContent += chunk
+        setMessages(prev => 
+          prev.map(msg => 
+            msg.id === assistantMessageId 
+              ? { ...msg, content: accumulatedContent }
+              : msg
+          )
+        )
+      },
+      // onComplete: 流结束
+      () => {
+        setIsLoading(false)
+        cancelRequestRef.current = null
+        
+        // 如果没有收到任何内容，显示默认消息
+        if (!accumulatedContent.trim()) {
+          setMessages(prev => 
+            prev.map(msg => 
+              msg.id === assistantMessageId 
+                ? { ...msg, content: DEFAULT_MESSAGES.EMPTY_RESPONSE }
+                : msg
+            )
+          )
+        }
+      },
+      // onError: 发生错误
+      (error) => {
+        console.error('流式请求错误:', error)
+        setIsLoading(false)
+        cancelRequestRef.current = null
+        
+        // 显示错误消息
+        setMessages(prev => 
+          prev.map(msg => 
+            msg.id === assistantMessageId 
+              ? { ...msg, content: DEFAULT_MESSAGES.ERROR, isError: true }
+              : msg
+          )
+        )
+      }
+    )
   }, [isLoading, chatId])
 
   // 清空聊天记录
   const clearMessages = useCallback(() => {
+    // 取消正在进行的请求
+    if (cancelRequestRef.current) {
+      cancelRequestRef.current()
+      cancelRequestRef.current = null
+    }
     setMessages([])
+    setIsLoading(false)
   }, [])
 
   return {

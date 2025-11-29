@@ -5,11 +5,12 @@ import { MESSAGE_ROLES } from '../constants/messages'
  * @param {string} role - 消息角色
  * @param {string} content - 消息内容
  * @param {boolean} isError - 是否为错误消息
+ * @param {string} id - 消息ID（可选）
  * @returns {Object} 消息对象
  */
-export const createMessage = (role, content, isError = false) => {
+export const createMessage = (role, content, isError = false, id = null) => {
   return {
-    id: Date.now() + Math.random(),
+    id: id || (Date.now() + Math.random()).toString(),
     role,
     content,
     timestamp: new Date().toLocaleTimeString(),
@@ -30,10 +31,11 @@ export const createUserMessage = (content) => {
  * 创建助手消息
  * @param {string} content - 消息内容
  * @param {boolean} isError - 是否为错误消息
+ * @param {string} id - 消息ID（可选）
  * @returns {Object} 助手消息对象
  */
-export const createAssistantMessage = (content, isError = false) => {
-  return createMessage(MESSAGE_ROLES.ASSISTANT, content, isError)
+export const createAssistantMessage = (content, isError = false, id = null) => {
+  return createMessage(MESSAGE_ROLES.ASSISTANT, content, isError, id)
 }
 
 /**

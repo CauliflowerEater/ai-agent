@@ -7,6 +7,7 @@ import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 import static org.springframework.ai.chat.memory.ChatMemory.CONVERSATION_ID;
 
 
@@ -33,6 +34,7 @@ public class PsychiatristApp {
                     "引导用户描述事情经过，以及在事件中自身的感受；"+
                     "基于描述，分析出用户可能患有的精神疾病，尝试说服用户相信自己患有该疾病；"+
                     "用户会反过来证明自己没有病，你需要和用户进行博弈;";
+
     public PsychiatristApp(ChatModel dashscopeChatModel, ChatMemory chatMemory) {
         chatClient = ChatClient.builder(dashscopeChatModel)
                 .defaultSystem(SYSTEM_PROMPT)
@@ -45,22 +47,21 @@ public class PsychiatristApp {
     }
 
     // 方法重载：使用默认chatId
-    public String doChat(String message) {
-        return doChat(message, "1");
+    public Flux<String> doChatStream(String message) {
+        return doChatStream(message, "1");
     }
-
-    public String doChat(String message, String chatId) {
-        ChatResponse response = chatClient
+    
+    public Flux<String> doChatStream(String message, String chatId) {
+        return chatClient
                 .prompt()
                 .user(message)
                 .advisors(spec -> spec.param(CONVERSATION_ID, chatId))
-                .call()
-                .chatResponse();
-        String content = response.getResult().getOutput().getText();
-//        log.info("content: {}", content);
-        return content;
+                .stream()
+                .content();
     }
 
+    //todo
+    //更新带报告的对话为流式响应
     public record MentalHealthReport(String title, List<String> suggestions) {
     }
     public MentalHealthReport doChatWithReport(String message, String chatId) {
