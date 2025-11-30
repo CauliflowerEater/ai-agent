@@ -10,7 +10,7 @@ function MessageItem({ message }) {
         {isUser ? (
           '👤'
         ) : (
-          <img src="/Cuty/Happy.png" alt="AI助手" className="avatar-image" />
+          <img src="/Cuty/Happy.png" alt="对面" className="avatar-image" />
         )}
       </div>
       <div className="message-content">
