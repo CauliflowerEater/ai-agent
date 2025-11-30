@@ -9,6 +9,7 @@ export const DEFAULT_MESSAGES = {
   ERROR: '抱歉，发送消息失败，请稍后重试。',
   EMPTY_RESPONSE: '抱歉，我无法回答这个问题。',
   WELCOME: '👋 你好！我是AI助手，有什么可以帮助你的吗？',
+  INITIAL: '你好', 
 }
 
 // 消息提示

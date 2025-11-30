@@ -6,15 +6,17 @@ import { useChat } from '../hooks/useChat'
 import { useAutoScroll } from '../hooks/useAutoScroll'
 import './ChatPage.css'
 
+const PIXEL_FRAMES=['/Cuty/Speaking_0.png', '/Cuty/Speaking_1.png'];
+
 function ChatPage() {
   const { messages, isLoading, handleSendMessage, clearMessages, sendInitialMessage } = useChat()
-  const scrollRef = useAutoScroll([messages])
+  const { scrollContainerRef, scrollBottomRef, autoScroll } = useAutoScroll([messages])
 
   return (
     <div className="chat-page">
       <div className="animation-section">
         <PixelAnimation 
-          frames={['/Cuty/Speaking_0.png', '/Cuty/Speaking_1.png']} 
+          frames={PIXEL_FRAMES} 
           width={2048}
           height={2048}
           fps={2}
@@ -31,7 +33,8 @@ function ChatPage() {
         <MessageList 
           messages={messages} 
           isLoading={isLoading} 
-          scrollRef={scrollRef}
+          scrollContainerRef={scrollContainerRef}
+          scrollBottomRef={scrollBottomRef}
           onInitialRequest={sendInitialMessage}
         />
         <ChatInput 
