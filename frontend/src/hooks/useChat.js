@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { sendMessageStream } from '../api/chatApi'
 import { createUserMessage, createAssistantMessage } from '../utils/messageUtils'
 import { DEFAULT_MESSAGES } from '../constants/messages'
@@ -11,6 +11,7 @@ export const useChat = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [chatId] = useState('user_' + Date.now()) // 生成唯一会话ID
   const cancelRequestRef = useRef(null)
+  const hasInitializedRef = useRef(false) // 标记是否已初始化
 
   // 发送消息（SSE流式）
   const handleSendMessage = useCallback(async (inputValue) => {
@@ -91,12 +92,22 @@ export const useChat = () => {
     }
     setMessages([])
     setIsLoading(false)
+    hasInitializedRef.current = false // 重置初始化标记
   }, [])
+
+  // 发送初始消息
+  const sendInitialMessage = useCallback(() => {
+    if (!hasInitializedRef.current && messages.length === 0 && !isLoading) {
+      hasInitializedRef.current = true
+      handleSendMessage('你好')
+    }
+  }, [messages.length, isLoading, handleSendMessage])
 
   return {
     messages,
     isLoading,
     handleSendMessage,
     clearMessages,
+    sendInitialMessage,
   }
 }

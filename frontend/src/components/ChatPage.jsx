@@ -7,7 +7,7 @@ import { useAutoScroll } from '../hooks/useAutoScroll'
 import './ChatPage.css'
 
 function ChatPage() {
-  const { messages, isLoading, handleSendMessage, clearMessages } = useChat()
+  const { messages, isLoading, handleSendMessage, clearMessages, sendInitialMessage } = useChat()
   const scrollRef = useAutoScroll([messages])
 
   return (
@@ -31,7 +31,8 @@ function ChatPage() {
         <MessageList 
           messages={messages} 
           isLoading={isLoading} 
-          scrollRef={scrollRef} 
+          scrollRef={scrollRef}
+          onInitialRequest={sendInitialMessage}
         />
         <ChatInput 
           onSendMessage={handleSendMessage} 

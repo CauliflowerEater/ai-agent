@@ -1,19 +1,20 @@
+import { useEffect } from 'react'
 import MessageItem from './MessageItem'
-import { DEFAULT_MESSAGES } from '../constants/messages'
 import './MessageList.css'
 
-function MessageList({ messages, isLoading, scrollRef }) {
+function MessageList({ messages, isLoading, scrollRef, onInitialRequest }) {
+  // 当消息为空时，发起初始请求
+  useEffect(() => {
+    if (messages.length === 0 && !isLoading && onInitialRequest) {
+      onInitialRequest()
+    }
+  }, [messages.length, isLoading, onInitialRequest])
+
   return (
     <div className="chat-messages">
-      {messages.length === 0 ? (
-        <div className="empty-state">
-          <p>{DEFAULT_MESSAGES.WELCOME}</p>
-        </div>
-      ) : (
-        messages.map(message => (
-          <MessageItem key={message.id} message={message} />
-        ))
-      )}
+      {messages.map(message => (
+        <MessageItem key={message.id} message={message} />
+      ))}
       <div ref={scrollRef} />
     </div>
   )
