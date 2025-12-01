@@ -12,9 +12,11 @@ function MessageList({ messages, isLoading, scrollContainerRef, scrollBottomRef,
 
   return (
     <div className="chat-messages" ref={scrollContainerRef}>
+      {/* 消息列表 */}
       {messages.map(message => (
         <MessageItem key={message.id} message={message} />
       ))}
+      
       <div ref={scrollBottomRef} />
     </div>
   )

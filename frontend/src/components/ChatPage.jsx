@@ -10,7 +10,7 @@ const PIXEL_FRAMES=['/Cuty/Speaking_0.png', '/Cuty/Speaking_1.png'];
 
 function ChatPage() {
   const { messages, isLoading, handleSendMessage, clearMessages, sendInitialMessage } = useChat()
-  const { scrollContainerRef, scrollBottomRef, autoScroll } = useAutoScroll([messages])
+  const { scrollContainerRef, scrollBottomRef, autoScroll } = useAutoScroll(messages, isLoading)
 
   return (
     <div className="chat-page">

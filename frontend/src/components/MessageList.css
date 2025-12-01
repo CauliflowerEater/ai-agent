@@ -4,6 +4,9 @@
   padding: 2rem;
   background-color: #ffffff;
   scroll-behavior: smooth;
+  position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .empty-state {
