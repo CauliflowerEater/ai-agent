@@ -22,9 +22,6 @@ export const useChat = () => {
     setMessages(prev => [...prev, userMessage])
     setIsLoading(true)
 
-    // 延迟0.5秒，让前端有时间处理动画
-    await new Promise(resolve => setTimeout(resolve, 500))
-
     // 创建助手消息占位符
     let currentMessageId = 'assistant_' + Date.now()
     const assistantMessage = createAssistantMessage('', false, currentMessageId)

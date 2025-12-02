@@ -18,6 +18,7 @@ export const useAutoScroll = (messages, isLoading) => {
   const loadingStartScrollTopRef = useRef(0) // 记录开始加载时的滚动位置
   const placeholderHeightRef = useRef(0) // 记录占位符高度
   const prevMessageCountRef = useRef(0)   // 记录上次的消息数量
+  const isProgrammaticScrollRef = useRef(false) // 标记是否为程序化滚动
   const THRESHOLD = 50 // 判断是否在底部的阈值（像素）
 
   /**
@@ -37,13 +38,23 @@ export const useAutoScroll = (messages, isLoading) => {
    * 滚动到底部
    */
   const scrollToBottom = useCallback(() => {
+    isProgrammaticScrollRef.current = true // 标记为程序化滚动
     scrollBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    // 延迟重置标志位，等待滚动完成
+    setTimeout(() => {
+      isProgrammaticScrollRef.current = false
+    }, 100)
   }, [])
 
   /**
    * 处理滚动事件
    */
   const handleScroll = useCallback(() => {
+    // 如果是程序化滚动，忽略此次事件
+    if (isProgrammaticScrollRef.current) {
+      return
+    }
+
     const container = scrollContainerRef.current
     if (!container) return
 
@@ -175,12 +186,18 @@ export const useAutoScroll = (messages, isLoading) => {
           // 总增量已超过一屏，滚动到用户最后一条消息的底部
           const lastUserMessageElement = window.getLastUserMessageRef?.()
           if (lastUserMessageElement) {
+            // 标记为程序化滚动
+            isProgrammaticScrollRef.current = true
             // 计算用户消息底部相对于容器的位置
             const messageBottom = lastUserMessageElement.offsetTop + lastUserMessageElement.offsetHeight
             // 滚动到用户消息底部位置
             container.scrollTop = messageBottom
             // 更新滚动位置记录
             loadingStartScrollTopRef.current = container.scrollTop
+            // 延迟重置标志位
+            setTimeout(() => {
+              isProgrammaticScrollRef.current = false
+            }, 100)
           }
           // 停止自动滚动
           setAutoScroll(false)
