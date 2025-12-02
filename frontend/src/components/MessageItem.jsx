@@ -1,11 +1,12 @@
+import { forwardRef } from 'react'
 import { MESSAGE_ROLES } from '../constants/messages'
 import './MessageItem.css'
 
-function MessageItem({ message }) {
+const MessageItem = forwardRef(({ message }, ref) => {
   const isUser = message.role === MESSAGE_ROLES.USER
   
   return (
-    <div className={`message ${message.role} ${message.isError ? 'error' : ''}`}>
+    <div ref={ref} className={`message ${message.role} ${message.isError ? 'error' : ''}`}>
       <div className="message-avatar">
         {isUser ? (
           '👤'
@@ -19,6 +20,8 @@ function MessageItem({ message }) {
       </div>
     </div>
   )
-}
+})
+
+MessageItem.displayName = 'MessageItem'
 
 export default MessageItem

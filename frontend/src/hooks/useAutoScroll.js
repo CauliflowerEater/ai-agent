@@ -15,8 +15,10 @@ export const useAutoScroll = (messages, isLoading) => {
   const [autoScroll, setAutoScroll] = useState(true) // 是否自动滚动
   const prevScrollHeightRef = useRef(0)   // 记录上次的滚动高度
   const loadingStartHeightRef = useRef(0) // 记录开始加载时的高度
+  const loadingStartScrollTopRef = useRef(0) // 记录开始加载时的滚动位置
+  const placeholderHeightRef = useRef(0) // 记录占位符高度
   const prevMessageCountRef = useRef(0)   // 记录上次的消息数量
-  const THRESHOLD = 30 // 判断是否在底部的阈值（像素）
+  const THRESHOLD = 50 // 判断是否在底部的阈值（像素）
 
   /**
    * 判断是否在底部附近
@@ -75,8 +77,20 @@ export const useAutoScroll = (messages, isLoading) => {
     if (!container) return
 
     if (isLoading) {
-      // 开始加载时，记录当前高度
+      // 开始加载时，记录当前高度和滚动位置
+      // 查找占位符消息（最后一条内容为空的助手消息）
+      const messageElements = container.querySelectorAll('.message.assistant')
+      const lastAssistantMessage = messageElements[messageElements.length - 1]
+      
+      if (lastAssistantMessage) {
+        // 记录占位符高度（包括margin）
+        const styles = window.getComputedStyle(lastAssistantMessage)
+        const marginBottom = parseFloat(styles.marginBottom) || 0
+        placeholderHeightRef.current = lastAssistantMessage.offsetHeight + marginBottom
+      }
+      
       loadingStartHeightRef.current = container.scrollHeight
+      loadingStartScrollTopRef.current = container.scrollTop
       prevScrollHeightRef.current = container.scrollHeight
     } else {
       // 加载结束时，检查是否超过一屏
@@ -150,14 +164,25 @@ export const useAutoScroll = (messages, isLoading) => {
     if (deltaHeight > 0 && autoScroll) {
       // 有新内容且处于自动滚动模式
       if (isLoading) {
-        // 检查从开始加载到现在的总增量
-        const totalDelta = scrollHeight - loadingStartHeightRef.current
+        // 检查从开始加载到现在的总增量（需要减去占位符高度）
+        const actualStartHeight = loadingStartHeightRef.current - placeholderHeightRef.current
+        const totalDelta = scrollHeight - actualStartHeight
         
         if (totalDelta <= clientHeight) {
           // 总增量不超过一屏，继续实时滚动
           scrollToBottom()
         } else {
-          // 总增量已超过一屏，停止自动滚动
+          // 总增量已超过一屏，滚动到用户最后一条消息的底部
+          const lastUserMessageElement = window.getLastUserMessageRef?.()
+          if (lastUserMessageElement) {
+            // 计算用户消息底部相对于容器的位置
+            const messageBottom = lastUserMessageElement.offsetTop + lastUserMessageElement.offsetHeight
+            // 滚动到用户消息底部位置
+            container.scrollTop = messageBottom
+            // 更新滚动位置记录
+            loadingStartScrollTopRef.current = container.scrollTop
+          }
+          // 停止自动滚动
           setAutoScroll(false)
         }
       }
