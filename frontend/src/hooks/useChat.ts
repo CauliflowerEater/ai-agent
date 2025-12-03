@@ -1,20 +1,21 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { sendMessageStream } from '../api/chatApi'
 import { createUserMessage, createAssistantMessage } from '../utils/messageUtils'
 import { DEFAULT_MESSAGES } from '../constants/messages'
+import type { Message, UseChatReturn } from '../types'
 
 /**
  * 聊天功能自定义Hook（SSE流式版本）
  */
-export const useChat = () => {
-  const [messages, setMessages] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [chatId] = useState('user_' + Date.now()) // 生成唯一会话ID
-  const cancelRequestRef = useRef(null)
-  const hasInitializedRef = useRef(false) // 标记是否已初始化
+export const useChat = (): UseChatReturn => {
+  const [messages, setMessages] = useState<Message[]>([])
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [chatId] = useState<string>(`user_${Date.now()}`) // 生成唯一会话ID
+  const cancelRequestRef = useRef<(() => void) | null>(null)
+  const hasInitializedRef = useRef<boolean>(false) // 标记是否已初始化
 
   // 发送消息（SSE流式）
-  const handleSendMessage = useCallback(async (inputValue) => {
+  const handleSendMessage = useCallback(async (inputValue: string): Promise<void> => {
     if (!inputValue.trim() || isLoading) return
 
     // 添加用户消息
@@ -42,7 +43,7 @@ export const useChat = () => {
       inputValue,
       chatId,
       // onChunk: 收到数据块
-      (deltaText) => {
+      (deltaText: string) => {
         // 1. 把本次增量追加到 buffer
         textBuffer += deltaText
 
@@ -112,7 +113,7 @@ export const useChat = () => {
         }
       },
       // onError: 发生错误
-      (error) => {
+      (error: Error) => {
         console.error('流式请求错误:', error)
         setIsLoading(false)
         cancelRequestRef.current = null

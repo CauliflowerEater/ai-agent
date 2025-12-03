@@ -1,4 +1,14 @@
-import { useRef, useEffect, useState, useCallback } from 'react'
+import { useRef, useEffect, useState, useCallback, RefObject } from 'react'
+import type { Message } from '../types'
+
+/**
+ * useAutoScroll Hook 返回值类型
+ */
+interface UseAutoScrollReturn {
+  scrollContainerRef: RefObject<HTMLDivElement>
+  scrollBottomRef: RefObject<HTMLDivElement>
+  autoScroll: boolean
+}
 
 /**
  * 智能自动滚动Hook
@@ -6,19 +16,22 @@ import { useRef, useEffect, useState, useCallback } from 'react'
  * 1. 流式显示时实时滚动：跟随新内容显示而滚动
  * 2. 智能阅读模式：当新增内容超过一屏时，进入阅读模式不再滚动
  * 3. 手动控制：用户向上滚动后禁用自动滚动，滚回底部后恢复
- * @param {Array} messages - 消息数组，用于监听内容变化
- * @param {boolean} isLoading - 是否正在加载，用于判断回复是否完成
+ * @param messages - 消息数组，用于监听内容变化
+ * @param isLoading - 是否正在加载，用于判断回复是否完成
  */
-export const useAutoScroll = (messages, isLoading) => {
-  const scrollContainerRef = useRef(null) // 滚动容器引用
-  const scrollBottomRef = useRef(null)    // 底部元素引用
-  const [autoScroll, setAutoScroll] = useState(true) // 是否自动滚动
-  const prevScrollHeightRef = useRef(0)   // 记录上次的滚动高度
-  const loadingStartHeightRef = useRef(0) // 记录开始加载时的高度
-  const loadingStartScrollTopRef = useRef(0) // 记录开始加载时的滚动位置
-  const placeholderHeightRef = useRef(0) // 记录占位符高度
-  const prevMessageCountRef = useRef(0)   // 记录上次的消息数量
-  const isProgrammaticScrollRef = useRef(false) // 标记是否为程序化滚动
+export const useAutoScroll = (
+  messages: Message[],
+  isLoading: boolean
+): UseAutoScrollReturn => {
+  const scrollContainerRef = useRef<HTMLDivElement>(null) // 滚动容器引用
+  const scrollBottomRef = useRef<HTMLDivElement>(null)    // 底部元素引用
+  const [autoScroll, setAutoScroll] = useState<boolean>(true) // 是否自动滚动
+  const prevScrollHeightRef = useRef<number>(0)   // 记录上次的滚动高度
+  const loadingStartHeightRef = useRef<number>(0) // 记录开始加载时的高度
+  const loadingStartScrollTopRef = useRef<number>(0) // 记录开始加载时的滚动位置
+  const placeholderHeightRef = useRef<number>(0) // 记录占位符高度
+  const prevMessageCountRef = useRef<number>(0)   // 记录上次的消息数量
+  const isProgrammaticScrollRef = useRef<boolean>(false) // 标记是否为程序化滚动
   const THRESHOLD = 50 // 判断是否在底部的阈值（像素）
 
   /**
@@ -93,7 +106,7 @@ export const useAutoScroll = (messages, isLoading) => {
       const messageElements = container.querySelectorAll('.message.assistant')
       const lastAssistantMessage = messageElements[messageElements.length - 1]
       
-      if (lastAssistantMessage) {
+      if (lastAssistantMessage && lastAssistantMessage instanceof HTMLElement) {
         // 记录占位符高度（包括margin）
         const styles = window.getComputedStyle(lastAssistantMessage)
         const marginBottom = parseFloat(styles.marginBottom) || 0
@@ -125,7 +138,7 @@ export const useAutoScroll = (messages, isLoading) => {
     const container = scrollContainerRef.current
     if (!container) return
 
-    const { scrollHeight, clientHeight, scrollTop } = container
+    const { scrollHeight, clientHeight } = container
     const prevScrollHeight = prevScrollHeightRef.current
     const currentMessageCount = messages.length
     const prevMessageCount = prevMessageCountRef.current
@@ -184,7 +197,7 @@ export const useAutoScroll = (messages, isLoading) => {
           scrollToBottom()
         } else {
           // 总增量已超过一屏，滚动到用户最后一条消息的底部
-          const lastUserMessageElement = window.getLastUserMessageRef?.()
+          const lastUserMessageElement = (window as any).getLastUserMessageRef?.()
           if (lastUserMessageElement) {
             // 标记为程序化滚动
             isProgrammaticScrollRef.current = true
