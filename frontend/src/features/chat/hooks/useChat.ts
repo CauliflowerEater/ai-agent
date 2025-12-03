@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react'
-import { sendMessageStream } from '../api/chatApi'
+import { sendMessageStream } from '../services/chatApi'
 import { createUserMessage, createAssistantMessage } from '../utils/messageUtils'
 import { DEFAULT_MESSAGES } from '../constants/messages'
 import type { Message, UseChatReturn } from '../types'

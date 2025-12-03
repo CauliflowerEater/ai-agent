@@ -1,20 +1,8 @@
 /**
- * 类型定义统一导出文件
+ * 全局类型定义统一导出文件
+ * 
+ * 注意：聊天相关类型已迁移至 features/chat/types
  */
-
-// 消息类型
-export type { MessageRole, Message, CreateMessageParams } from './message'
-
-// 聊天类型
-export type {
-  ChatRequest,
-  ChatResponse,
-  OnChunkCallback,
-  OnCompleteCallback,
-  OnErrorCallback,
-  CancelRequestFn,
-  UseChatReturn
-} from './chat'
 
 // API类型
 export type {

@@ -1,4 +1,4 @@
-import ChatPage from './components/ChatPage'
+import { ChatPage } from './features/chat'
 import './App.css'
 
 function App() {
