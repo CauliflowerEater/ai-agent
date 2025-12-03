@@ -3,20 +3,38 @@ import * as PIXI from 'pixi.js'
 import './PixelAnimation.css'
 
 /**
- * 像素动画播放组件
- * @param {Object} props
- * @param {string} props.spriteSheet - 精灵图路径（与frames二选一）
- * @param {Array<string>} props.frames - 独立图片路径数组（与spriteSheet二选一）
- * @param {number} props.frameWidth - 每帧宽度（spriteSheet模式必填）
- * @param {number} props.frameHeight - 每帧高度（spriteSheet模式必填）
- * @param {number} props.frameCount - 总帧数（spriteSheet模式必填）
- * @param {number} props.width - 画布宽度（frames模式使用）
- * @param {number} props.height - 画布高度（frames模式使用）
- * @param {number} props.fps - 帧率 (默认12)
- * @param {boolean} props.loop - 是否循环播放 (默认true)
- * @param {number} props.scale - 缩放比例 (默认2)
+ * PixelAnimation 组件属性
  */
-const PixelAnimation = ({
+interface PixelAnimationProps {
+  /** 精灵图路径（与frames二选一） */
+  spriteSheet?: string
+  /** 独立图片路径数组（与spriteSheet二选一） */
+  frames?: string[]
+  /** 每帧宽度（spriteSheet模式必填） */
+  frameWidth?: number
+  /** 每帧高度（spriteSheet模式必填） */
+  frameHeight?: number
+  /** 总帧数（spriteSheet模式必填） */
+  frameCount?: number
+  /** 画布宽度（frames模式使用） */
+  width?: number
+  /** 画布高度（frames模式使用） */
+  height?: number
+  /** 帧率 (默认12) */
+  fps?: number
+  /** 是否循环播放 (默认true) */
+  loop?: boolean
+  /** 缩放比例 (默认1) */
+  scale?: number
+  /** 是否自动播放 */
+  autoPlay?: boolean
+}
+
+/**
+ * 像素动画播放组件
+ * 支持精灵图和独立图片两种模式
+ */
+function PixelAnimation({
   spriteSheet,
   frames,
   frameWidth = 96,
@@ -28,11 +46,11 @@ const PixelAnimation = ({
   loop = true,
   scale = 1,
   autoPlay = true
-}) => {
-  const canvasRef = useRef(null)
-  const appRef = useRef(null)
-  const animatedSpriteRef = useRef(null)
-  const [isPlaying, setIsPlaying] = useState(autoPlay)
+}: PixelAnimationProps) {
+  const canvasRef = useRef<HTMLDivElement>(null)
+  const appRef = useRef<PIXI.Application | null>(null)
+  const animatedSpriteRef = useRef<PIXI.AnimatedSprite | null>(null)
+  const [isPlaying, setIsPlaying] = useState<boolean>(autoPlay || false)
 
   useEffect(() => {
     if (!canvasRef.current) return
@@ -41,7 +59,7 @@ const PixelAnimation = ({
     const canvasWidth = width ? width * scale : frameWidth * scale
     const canvasHeight = height ? height * scale : frameHeight * scale
 
-    let app = null
+    let app: PIXI.Application | null = null
     let mounted = true
 
     // 创建PIXI应用（使用v8新API）
@@ -96,18 +114,19 @@ const PixelAnimation = ({
   }, [spriteSheet, frames, frameWidth, frameHeight, frameCount, width, height, scale])
 
   // 从精灵图加载动画
-  const loadAnimationFromSpriteSheet = async (app) => {
+  const loadAnimationFromSpriteSheet = async (app: PIXI.Application): Promise<void> => {
     try {
       // 加载纹理
+      if (!spriteSheet) return
       const texture = await PIXI.Assets.load(spriteSheet)
       
       // 创建帧数组
       const frameTextures = []
       for (let i = 0; i < frameCount; i++) {
-        const frame = new PIXI.Texture(
-          texture,
-          new PIXI.Rectangle(i * frameWidth, 0, frameWidth, frameHeight)
-        )
+        const frame = new PIXI.Texture({
+          source: texture.source,
+          frame: new PIXI.Rectangle(i * frameWidth, 0, frameWidth, frameHeight)
+        })
         frameTextures.push(frame)
       }
 
@@ -118,9 +137,10 @@ const PixelAnimation = ({
   }
 
   // 从独立图片加载动画
-  const loadAnimationFromFrames = async (app) => {
+  const loadAnimationFromFrames = async (app: PIXI.Application): Promise<void> => {
     try {
       // 加载所有图片
+      if (!frames) return
       const textures = await Promise.all(
         frames.map(framePath => PIXI.Assets.load(framePath))
       )
@@ -132,7 +152,7 @@ const PixelAnimation = ({
   }
 
   // 创建动画精灵
-  const createAnimatedSprite = (app, textures) => {
+  const createAnimatedSprite = (app: PIXI.Application, textures: PIXI.Texture[]): void => {
     const animatedSprite = new PIXI.AnimatedSprite(textures)
     animatedSprite.anchor.set(0)
     animatedSprite.scale.set(scale)

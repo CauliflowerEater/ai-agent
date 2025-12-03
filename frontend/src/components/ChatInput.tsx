@@ -1,9 +1,21 @@
-import { useState } from 'react'
+import { useState, KeyboardEvent, ChangeEvent } from 'react'
 import { MESSAGE_PLACEHOLDERS } from '../constants/messages'
 import './ChatInput.css'
 
-function ChatInput({ onSendMessage, isLoading }) {
-  const [inputValue, setInputValue] = useState('')
+/**
+ * ChatInput 组件属性
+ */
+interface ChatInputProps {
+  onSendMessage: (message: string) => void
+  isLoading: boolean
+}
+
+/**
+ * 聊天输入组件
+ * 用于输入和发送消息
+ */
+function ChatInput({ onSendMessage, isLoading }: ChatInputProps) {
+  const [inputValue, setInputValue] = useState<string>('')
 
   const handleSend = () => {
     if (inputValue.trim() && !isLoading) {
@@ -12,7 +24,7 @@ function ChatInput({ onSendMessage, isLoading }) {
     }
   }
 
-  const handleKeyPress = (e) => {
+  const handleKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSend()
@@ -24,7 +36,7 @@ function ChatInput({ onSendMessage, isLoading }) {
       <textarea
         className="chat-input"
         value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
+        onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setInputValue(e.target.value)}
         onKeyPress={handleKeyPress}
         placeholder={MESSAGE_PLACEHOLDERS.INPUT}
         disabled={isLoading}

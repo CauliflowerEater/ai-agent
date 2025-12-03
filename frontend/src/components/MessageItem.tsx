@@ -1,8 +1,21 @@
 import { forwardRef } from 'react'
 import { MESSAGE_ROLES } from '../constants/messages'
+import type { Message } from '../types'
 import './MessageItem.css'
 
-const MessageItem = forwardRef(({ message }, ref) => {
+/**
+ * MessageItem 组件属性
+ */
+interface MessageItemProps {
+  message: Message
+}
+
+/**
+ * 消息项组件
+ * 显示单条消息（用户或 AI）
+ */
+const MessageItem = forwardRef<HTMLDivElement, MessageItemProps>(
+  ({ message }, ref) => {
   const isUser = message.role === MESSAGE_ROLES.USER
   
   return (

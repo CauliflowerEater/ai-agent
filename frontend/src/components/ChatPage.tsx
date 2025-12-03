@@ -6,11 +6,15 @@ import { useChat } from '../hooks/useChat'
 import { useAutoScroll } from '../hooks/useAutoScroll'
 import './ChatPage.css'
 
-const PIXEL_FRAMES=['/Cuty/Speaking_0.png', '/Cuty/Speaking_1.png'];
+const PIXEL_FRAMES: string[] = ['/Cuty/Speaking_0.png', '/Cuty/Speaking_1.png']
 
+/**
+ * 聊天页面主组件
+ * 集成聊天功能的所有子组件
+ */
 function ChatPage() {
   const { messages, isLoading, handleSendMessage, clearMessages, sendInitialMessage } = useChat()
-  const { scrollContainerRef, scrollBottomRef, autoScroll } = useAutoScroll(messages, isLoading)
+  const { scrollContainerRef, scrollBottomRef } = useAutoScroll(messages, isLoading)
 
   return (
     <div className="chat-page">

@@ -1,6 +1,18 @@
 import './ChatHeader.css'
 
-function ChatHeader({ onClearChat, hasMessages }) {
+/**
+ * ChatHeader 组件属性
+ */
+interface ChatHeaderProps {
+  onClearChat: () => void
+  hasMessages: boolean
+}
+
+/**
+ * 聊天头部组件
+ * 显示标题和清空按钮
+ */
+function ChatHeader({ onClearChat, hasMessages }: ChatHeaderProps) {
   return (
     <div className="chat-header">
       <h2>社区聊天室</h2>
