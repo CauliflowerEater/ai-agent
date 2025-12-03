@@ -1,19 +1,33 @@
 import { API_BASE_URL, API_ENDPOINTS } from '../constants/api'
+import type {
+  ChatRequest,
+  OnChunkCallback,
+  OnCompleteCallback,
+  OnErrorCallback,
+  CancelRequestFn,
+  HealthCheckResponse
+} from '../types'
 
 /**
  * 发送聊天消息（SSE 流式）
- * @param {string} message - 用户消息
- * @param {string} chatId - 会话ID
- * @param {Function} onChunk - 收到数据块的回调函数
- * @param {Function} onComplete - 完成时的回调函数
- * @param {Function} onError - 错误时的回调函数
- * @returns {Function} 取消请求的函数
+ * @param message - 用户消息
+ * @param chatId - 会话ID
+ * @param onChunk - 收到数据块的回调函数
+ * @param onComplete - 完成时的回调函数
+ * @param onError - 错误时的回调函数
+ * @returns 取消请求的函数
  */
-export const sendMessageStream = (message, chatId, onChunk, onComplete, onError) => {
+export const sendMessageStream = (
+  message: string,
+  chatId: string,
+  onChunk: OnChunkCallback,
+  onComplete: OnCompleteCallback,
+  onError: OnErrorCallback
+): CancelRequestFn => {
   const controller = new AbortController()
-  const signal = controller.signal
+  const { signal } = controller
 
-  const requestBody = {
+  const requestBody: ChatRequest = {
     message,
     chatId
   }
@@ -26,12 +40,16 @@ export const sendMessageStream = (message, chatId, onChunk, onComplete, onError)
     body: JSON.stringify(requestBody),
     signal
   })
-    .then(async response => {
+    .then(async (response) => {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      const reader = response.body.getReader()
+      const reader = response.body?.getReader()
+      if (!reader) {
+        throw new Error('Response body is null')
+      }
+
       const decoder = new TextDecoder('utf-8')
       let buffer = ''
 
@@ -39,7 +57,7 @@ export const sendMessageStream = (message, chatId, onChunk, onComplete, onError)
         const { done, value } = await reader.read()
         
         if (done) {
-          onComplete?.()
+          onComplete()
           break
         }
 
@@ -54,18 +72,18 @@ export const sendMessageStream = (message, chatId, onChunk, onComplete, onError)
           if (line.startsWith('data:')) {
             const data = line.slice(5).trim()
             if (data) {
-              onChunk?.(data)
+              onChunk(data)
             }
           }
         }
       }
     })
-    .catch(error => {
-      if (error.name === 'AbortError') {
+    .catch((error: unknown) => {
+      if (error instanceof Error && error.name === 'AbortError') {
         console.log('请求已取消')
       } else {
         console.error('发送消息失败:', error)
-        onError?.(error)
+        onError(error instanceof Error ? error : new Error(String(error)))
       }
     })
 
@@ -75,9 +93,9 @@ export const sendMessageStream = (message, chatId, onChunk, onComplete, onError)
 
 /**
  * 检查健康状态
- * @returns {Promise<Object>} 健康状态
+ * @returns 健康状态响应
  */
-export const checkHealth = async () => {
+export const checkHealth = async (): Promise<HealthCheckResponse> => {
   try {
     const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.HEALTH}`)
     
