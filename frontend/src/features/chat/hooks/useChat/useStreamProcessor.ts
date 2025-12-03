@@ -3,7 +3,7 @@
  * 处理分段文本、缓冲区管理
  */
 
-import { useRef, Dispatch, SetStateAction } from 'react'
+import { useRef } from 'react'
 import { CHUNK_DELIMITER } from './constants'
 import { generateSegmentMessageId, updateMessageContent, addMessage } from './messageUtils'
 import { createAssistantMessage } from '../../utils/messageUtils'
@@ -12,8 +12,8 @@ import type { Message } from '../../types'
 import type { StreamHandlers, MessageState } from './types'
 
 export function useStreamProcessor(
-  setMessages: Dispatch<SetStateAction<Message[]>>,
-  setIsLoading: Dispatch<SetStateAction<boolean>>,
+  setMessages: (messages: Message[] | ((prev: Message[]) => Message[])) => void,
+  setIsLoading: (loading: boolean) => void,
   cancelRequestRef: React.MutableRefObject<(() => void) | null>
 ) {
   const messageStateRef = useRef<MessageState>({

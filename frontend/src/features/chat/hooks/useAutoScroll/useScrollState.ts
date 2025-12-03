@@ -1,16 +1,18 @@
 /**
  * 滚动状态管理 Hook
- * 管理自动滚动状态，监听用户手动滚动
+ * 使用 Zustand scrollStore 管理自动滚动状态，监听用户手动滚动
  */
 
-import { useState, useEffect, useCallback, RefObject, MutableRefObject } from 'react'
+import { useEffect, useCallback, RefObject, MutableRefObject } from 'react'
+import { useScrollStore } from '../../../../stores'
 import { isNearBottom } from './scrollUtils'
 
 export function useScrollState(
   containerRef: RefObject<HTMLDivElement>,
   isProgrammaticScrollRef: MutableRefObject<boolean>
 ) {
-  const [autoScroll, setAutoScroll] = useState(true)
+  const autoScroll = useScrollStore((state) => state.autoScroll)
+  const setAutoScroll = useScrollStore((state) => state.setAutoScroll)
   
   /**
    * 处理用户手动滚动事件
@@ -31,7 +33,7 @@ export function useScrollState(
       // 用户向上滚动，禁用自动滚动
       setAutoScroll(false)
     }
-  }, [containerRef, isProgrammaticScrollRef])
+  }, [containerRef, isProgrammaticScrollRef, setAutoScroll])
   
   /**
    * 监听滚动事件

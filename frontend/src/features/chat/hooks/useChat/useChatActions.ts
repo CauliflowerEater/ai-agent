@@ -3,19 +3,20 @@
  * 提供发送消息、清空消息、初始化消息等操作
  */
 
-import { useCallback, Dispatch, SetStateAction, MutableRefObject } from 'react'
+import { useCallback, MutableRefObject } from 'react'
 import { sendMessageStream } from '../../services/chatApi'
 import { createUserMessage, createAssistantMessage } from '../../utils/messageUtils'
 import { DEFAULT_MESSAGES } from '../../constants/messages'
 import { generateAssistantMessageId, addMessage } from './messageUtils'
 import { useStreamProcessor } from './useStreamProcessor'
+import { useChatStore, useScrollStore } from '../../../../stores'
 import type { Message } from '../../types'
 
 interface UseChatActionsParams {
   messages: Message[]
-  setMessages: Dispatch<SetStateAction<Message[]>>
+  setMessages: (messages: Message[] | ((prev: Message[]) => Message[])) => void
   isLoading: boolean
-  setIsLoading: Dispatch<SetStateAction<boolean>>
+  setIsLoading: (loading: boolean) => void
   chatId: string
   cancelRequestRef: MutableRefObject<(() => void) | null>
   hasInitializedRef: MutableRefObject<boolean>
@@ -81,10 +82,12 @@ export function useChatActions({
       cancelRequestRef.current()
       cancelRequestRef.current = null
     }
-    setMessages([])
-    setIsLoading(false)
+    // 使用 Zustand 的 resetChat action
+    useChatStore.getState().resetChat()
+    // 重置滚动状态
+    useScrollStore.getState().resetScrollState()
     hasInitializedRef.current = false // 重置初始化标记
-  }, [setMessages, setIsLoading, cancelRequestRef, hasInitializedRef])
+  }, [cancelRequestRef, hasInitializedRef])
 
   /**
    * 发送初始消息
