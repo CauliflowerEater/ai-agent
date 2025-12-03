@@ -1,0 +1,25 @@
+.pixel-animation-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: center;
+}
+
+.control-btn {
+  padding: 6px 12px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.control-btn:hover {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+.control-btn:active {
+  transform: scale(0.95);
+}

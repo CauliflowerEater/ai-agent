@@ -9,7 +9,7 @@ export { default as ChatInput } from './components/ChatInput'
 export { default as MessageList } from './components/MessageList'
 export { default as MessageItem } from './components/MessageItem'
 export { default as TypingIndicator } from './components/TypingIndicator'
-export { default as PixelAnimation } from './components/PixelAnimation'
+export { default as PixelAnimation } from './components/pixelAnimation'
 
 // Hooks
 export { useChat } from './hooks/useChat'

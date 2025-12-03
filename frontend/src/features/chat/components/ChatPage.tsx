@@ -1,7 +1,7 @@
 import ChatHeader from './ChatHeader'
 import MessageList from './MessageList'
 import ChatInput from './ChatInput'
-import PixelAnimation from './PixelAnimation'
+import PixelAnimation from './pixelAnimation'
 import { useChat } from '../hooks/useChat'
 import { useAutoScroll } from '../hooks/useAutoScroll'
 import './ChatPage.css'
