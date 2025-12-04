@@ -17,8 +17,7 @@ import type { Message } from '../../types'
 import type { UseAutoScrollReturn } from './types'
 
 export function useAutoScroll(
-  messages: Message[],
-  isLoading: boolean
+  messages: Message[]
 ): UseAutoScrollReturn {
   // 创建 ref
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -34,12 +33,12 @@ export function useAutoScroll(
   )
   
   // 3. 加载状态跟踪（记录加载时的高度等信息）
-  const loadingTracker = useLoadingTracker(scrollContainerRef, isLoading)
+  const loadingTracker = useLoadingTracker(scrollContainerRef)
   
   // 4. 消息变化检测（检测新消息，触发滚动）
+  // 注意: isLoading 已经在 useMessageDetection 内部从 store 获取
   useMessageDetection(
     messages,
-    isLoading,
     autoScroll,
     setAutoScroll,
     scrollControl,

@@ -1,7 +1,8 @@
-import { useEffect, useRef, useCallback, RefObject } from 'react'
+import { useEffect, RefObject } from 'react'
+import { useScrollStore } from '../../../stores'
 import MessageItem from './MessageItem'
 import { MESSAGE_ROLES } from '../constants/messages'
-import type { Message } from '../types'
+import type { Message } from '../types/message'
 import './MessageList.css'
 
 /**
@@ -26,20 +27,20 @@ function MessageList({
   scrollBottomRef, 
   onInitialRequest 
 }: MessageListProps) {
-  const lastUserMessageRef = useRef<HTMLDivElement>(null)
+  const setLastUserMessageId = useScrollStore((state) => state.setLastUserMessageId)
 
-  // 获取最后一条用户消息的ref的方法
-  const getLastUserMessageRef = useCallback((): HTMLDivElement | null => {
-    return lastUserMessageRef.current
-  }, [])
-
-  // 将获取ref的方法暴露到window（用于外部访问）
+  // 更新最后一条用户消息的 ID
   useEffect(() => {
-    (window as any).getLastUserMessageRef = getLastUserMessageRef
-    return () => {
-      delete (window as any).getLastUserMessageRef
+    // 查找最后一条用户消息
+    const lastUserMessageIndex = messages.map(m => m.role).lastIndexOf(MESSAGE_ROLES.USER)
+    if (lastUserMessageIndex !== -1) {
+      const lastUserMessage = messages[lastUserMessageIndex]
+      setLastUserMessageId(`message-${lastUserMessage.id}`)
+    } else {
+      setLastUserMessageId(null)
     }
-  }, [getLastUserMessageRef])
+  }, [messages, setLastUserMessageId])
+  
   // 当消息为空时，发起初始请求
   useEffect(() => {
     if (messages.length === 0 && !isLoading && onInitialRequest) {
@@ -56,11 +57,12 @@ function MessageList({
           index === messages.map(m => m.role).lastIndexOf(MESSAGE_ROLES.USER)
         
         return (
-          <MessageItem 
-            key={message.id} 
-            message={message} 
-            ref={isLastUserMessage ? lastUserMessageRef : null}
-          />
+          <div 
+            key={message.id}
+            id={isLastUserMessage ? `message-${message.id}` : undefined}
+          >
+            <MessageItem message={message} />
+          </div>
         )
       })}
       

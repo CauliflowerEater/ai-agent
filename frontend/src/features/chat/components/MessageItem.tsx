@@ -1,6 +1,5 @@
-import { forwardRef } from 'react'
 import { MESSAGE_ROLES } from '../constants/messages'
-import type { Message } from '../types'
+import type { Message } from '../types/message'
 import './MessageItem.css'
 
 /**
@@ -14,12 +13,11 @@ interface MessageItemProps {
  * 消息项组件
  * 显示单条消息（用户或 AI）
  */
-const MessageItem = forwardRef<HTMLDivElement, MessageItemProps>(
-  ({ message }, ref) => {
+function MessageItem({ message }: MessageItemProps) {
   const isUser = message.role === MESSAGE_ROLES.USER
   
   return (
-    <div ref={ref} className={`message ${message.role} ${message.isError ? 'error' : ''}`}>
+    <div className={`message ${message.role} ${message.isError ? 'error' : ''}`}>
       <div className="message-avatar">
         {isUser ? (
           '👤'
@@ -33,8 +31,6 @@ const MessageItem = forwardRef<HTMLDivElement, MessageItemProps>(
       </div>
     </div>
   )
-})
-
-MessageItem.displayName = 'MessageItem'
+}
 
 export default MessageItem

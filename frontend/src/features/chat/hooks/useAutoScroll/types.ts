@@ -17,7 +17,7 @@ export interface ScrollControlReturn {
 }
 
 export interface LoadingTrackerReturn {
-  loadingStartHeightRef: MutableRefObject<number>
-  loadingStartScrollTopRef: MutableRefObject<number>
-  placeholderHeightRef: MutableRefObject<number>
+  loadingStartHeight: number
+  loadingStartScrollTop: number
+  placeholderHeight: number
 }

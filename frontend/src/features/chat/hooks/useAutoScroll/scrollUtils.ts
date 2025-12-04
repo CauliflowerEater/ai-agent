@@ -58,9 +58,11 @@ export function hasUserMessageInNewMessages(
 export function scrollToLastUserMessage(
   container: HTMLDivElement,
   isProgrammaticScrollRef: { current: boolean },
-  loadingStartScrollTopRef: { current: number }
+  lastUserMessageId: string | null
 ): void {
-  const lastUserMessageElement = (window as any).getLastUserMessageRef?.()
+  if (!lastUserMessageId) return
+  
+  const lastUserMessageElement = document.getElementById(lastUserMessageId)
   if (!lastUserMessageElement) return
   
   isProgrammaticScrollRef.current = true
@@ -70,9 +72,6 @@ export function scrollToLastUserMessage(
   
   // 滚动到用户消息底部位置
   container.scrollTop = messageBottom
-  
-  // 更新滚动位置记录
-  loadingStartScrollTopRef.current = container.scrollTop
   
   // 延迟重置标志位
   setTimeout(() => {

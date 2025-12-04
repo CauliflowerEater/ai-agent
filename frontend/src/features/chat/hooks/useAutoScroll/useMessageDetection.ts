@@ -3,22 +3,28 @@
  * 检测新消息、流式内容变化，触发相应的滚动行为
  */
 
-import { useRef, useEffect, RefObject, Dispatch, SetStateAction } from 'react'
+import { useRef, useEffect, RefObject } from 'react'
+import { useChatStore, useScrollStore } from '../../../../stores'
 import { hasUserMessageInNewMessages, scrollToLastUserMessage } from './scrollUtils'
 import type { Message } from '../../types'
 import type { ScrollControlReturn, LoadingTrackerReturn } from './types'
 
 export function useMessageDetection(
   messages: Message[],
-  isLoading: boolean,
   autoScroll: boolean,
-  setAutoScroll: Dispatch<SetStateAction<boolean>>,
+  setAutoScroll: (autoScroll: boolean) => void,
   scrollControl: ScrollControlReturn,
   loadingTracker: LoadingTrackerReturn,
   containerRef: RefObject<HTMLDivElement>
 ) {
   const prevMessageCountRef = useRef(0)
   const prevScrollHeightRef = useRef(0)
+  
+  // 从 chatStore 获取 isLoading
+  const isLoading = useChatStore((state) => state.isLoading)
+  
+  // 从 scrollStore 获取状态
+  const lastUserMessageId = useScrollStore((state) => state.lastUserMessageId)
   
   useEffect(() => {
     const container = containerRef.current
@@ -68,8 +74,8 @@ export function useMessageDetection(
     if (deltaHeight > 0 && autoScroll && isLoading) {
       // 检查从开始加载到现在的总增量（需要减去占位符高度）
       const actualStartHeight = 
-        loadingTracker.loadingStartHeightRef.current - 
-        loadingTracker.placeholderHeightRef.current
+        loadingTracker.loadingStartHeight - 
+        loadingTracker.placeholderHeight
       const totalDelta = scrollHeight - actualStartHeight
       
       if (totalDelta <= clientHeight) {
@@ -80,7 +86,7 @@ export function useMessageDetection(
         scrollToLastUserMessage(
           container,
           scrollControl.isProgrammaticScrollRef,
-          loadingTracker.loadingStartScrollTopRef
+          lastUserMessageId
         )
         // 停止自动滚动，进入阅读模式
         setAutoScroll(false)
@@ -112,7 +118,7 @@ export function useMessageDetection(
     // 加载结束时，检查总增量是否超过一屏
     const { scrollHeight, clientHeight } = container
     const totalDelta = 
-      scrollHeight - loadingTracker.loadingStartHeightRef.current
+      scrollHeight - loadingTracker.loadingStartHeight
     
     if (totalDelta > clientHeight) {
       // 总增量超过一屏，进入阅读模式

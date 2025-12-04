@@ -15,11 +15,15 @@ interface ScrollState {
   loadingStartScrollTop: number
   placeholderHeight: number
   
+  // 最后一条用户消息的 DOM ID
+  lastUserMessageId: string | null
+  
   // Actions
   setAutoScroll: (autoScroll: boolean) => void
   setLoadingStartHeight: (height: number) => void
   setLoadingStartScrollTop: (scrollTop: number) => void
   setPlaceholderHeight: (height: number) => void
+  setLastUserMessageId: (id: string | null) => void
   resetScrollState: () => void
 }
 
@@ -31,6 +35,7 @@ export const useScrollStore = create<ScrollState>()(
       loadingStartHeight: 0,
       loadingStartScrollTop: 0,
       placeholderHeight: 0,
+      lastUserMessageId: null,
       
       // Actions
       setAutoScroll: (autoScroll) =>
@@ -45,12 +50,16 @@ export const useScrollStore = create<ScrollState>()(
       setPlaceholderHeight: (height) =>
         set({ placeholderHeight: height }),
       
+      setLastUserMessageId: (id) =>
+        set({ lastUserMessageId: id }),
+      
       resetScrollState: () =>
         set({
           autoScroll: true,
           loadingStartHeight: 0,
           loadingStartScrollTop: 0,
-          placeholderHeight: 0
+          placeholderHeight: 0,
+          lastUserMessageId: null
         })
     }),
     {
