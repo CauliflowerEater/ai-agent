@@ -32,6 +32,7 @@ export {
   validateMessage,
   sanitizeMessage
 } from './utils/messageUtils'
+export { throttle } from './utils/throttle'
 
 // Types
 export type {

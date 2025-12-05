@@ -1,3 +1,4 @@
+import React from 'react'
 import { MESSAGE_ROLES } from '../constants/messages'
 import { AVATAR_CONFIG } from '../constants/animation'
 import type { Message } from '../types/message'
@@ -13,6 +14,7 @@ interface MessageItemProps {
 /**
  * 消息项组件
  * 显示单条消息（用户或 AI）
+ * 使用 React.memo 优化，避免不必要的重新渲染
  */
 function MessageItem({ message }: MessageItemProps) {
   const isUser = message.role === MESSAGE_ROLES.USER
@@ -34,4 +36,12 @@ function MessageItem({ message }: MessageItemProps) {
   )
 }
 
-export default MessageItem
+// 使用 React.memo 且自定义比较函数，只在关键字段变化时才重新渲染
+export default React.memo(MessageItem, (prevProps, nextProps) => {
+  // 返回 true 表示 props 相同，不需要重新渲染
+  return (
+    prevProps.message.id === nextProps.message.id &&
+    prevProps.message.content === nextProps.message.content &&
+    prevProps.message.isError === nextProps.message.isError
+  )
+})
