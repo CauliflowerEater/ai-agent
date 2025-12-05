@@ -1,11 +1,14 @@
 import { ChatPage } from './features/chat'
+import ErrorBoundary from './components/ErrorBoundary'
 import './App.css'
 
 function App() {
   return (
-    <div className="App">
-      <ChatPage />
-    </div>
+    <ErrorBoundary>
+      <div className="App">
+        <ChatPage />
+      </div>
+    </ErrorBoundary>
   )
 }
 
