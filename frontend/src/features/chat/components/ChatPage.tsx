@@ -4,9 +4,8 @@ import ChatInput from './ChatInput'
 import PixelAnimation from './pixelAnimation'
 import { useChat } from '../hooks/useChat'
 import { useAutoScroll } from '../hooks/useAutoScroll'
+import { PIXEL_ANIMATION_CONFIG } from '../constants/animation'
 import './ChatPage.css'
-
-const PIXEL_FRAMES: string[] = ['/Cuty/Speaking_0.png', '/Cuty/Speaking_1.png']
 
 /**
  * 聊天页面主组件
@@ -20,13 +19,13 @@ function ChatPage() {
     <div className="chat-page">
       <div className="animation-section">
         <PixelAnimation 
-          frames={PIXEL_FRAMES} 
-          width={2048}
-          height={2048}
-          fps={2}
-          loop={true}
-          scale={0.15}
-          autoPlay={true}
+          frames={PIXEL_ANIMATION_CONFIG.FRAMES} 
+          width={PIXEL_ANIMATION_CONFIG.WIDTH}
+          height={PIXEL_ANIMATION_CONFIG.HEIGHT}
+          fps={PIXEL_ANIMATION_CONFIG.FPS}
+          loop={PIXEL_ANIMATION_CONFIG.LOOP}
+          scale={PIXEL_ANIMATION_CONFIG.SCALE}
+          autoPlay={PIXEL_ANIMATION_CONFIG.AUTO_PLAY}
         />
       </div>
       <div className="chat-section">

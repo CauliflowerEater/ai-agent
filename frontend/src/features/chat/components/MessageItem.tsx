@@ -1,4 +1,5 @@
 import { MESSAGE_ROLES } from '../constants/messages'
+import { AVATAR_CONFIG } from '../constants/animation'
 import type { Message } from '../types/message'
 import './MessageItem.css'
 
@@ -20,9 +21,9 @@ function MessageItem({ message }: MessageItemProps) {
     <div className={`message ${message.role} ${message.isError ? 'error' : ''}`}>
       <div className="message-avatar">
         {isUser ? (
-          '👤'
+          AVATAR_CONFIG.USER
         ) : (
-          <img src="/Cuty/Happy.png" alt="对面" className="avatar-image" />
+          <img src={AVATAR_CONFIG.ASSISTANT} alt="对面" className="avatar-image" />
         )}
       </div>
       <div className="message-content">

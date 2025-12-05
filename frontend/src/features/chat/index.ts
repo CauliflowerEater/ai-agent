@@ -21,6 +21,7 @@ export { sendMessageStream, checkHealth } from './services/chatApi'
 // Constants
 export { API_BASE_URL, API_ENDPOINTS, HTTP_STATUS } from './constants/api'
 export { MESSAGE_ROLES, DEFAULT_MESSAGES, MESSAGE_PLACEHOLDERS } from './constants/messages'
+export { PIXEL_ANIMATION_CONFIG, AVATAR_CONFIG } from './constants/animation'
 
 // Utils
 export {
