@@ -18,8 +18,9 @@ interface UseChatActionsParams {
   isLoading: boolean
   setIsLoading: (loading: boolean) => void
   chatId: string
+  hasInitialized: boolean
+  setHasInitialized: (initialized: boolean) => void
   cancelRequestRef: MutableRefObject<(() => void) | null>
-  hasInitializedRef: MutableRefObject<boolean>
 }
 
 export function useChatActions({
@@ -28,8 +29,9 @@ export function useChatActions({
   isLoading,
   setIsLoading,
   chatId,
-  cancelRequestRef,
-  hasInitializedRef
+  hasInitialized,
+  setHasInitialized,
+  cancelRequestRef
 }: UseChatActionsParams) {
   
   // 获取流处理器
@@ -86,18 +88,17 @@ export function useChatActions({
     useChatStore.getState().resetChat()
     // 重置滚动状态
     useScrollStore.getState().resetScrollState()
-    hasInitializedRef.current = false // 重置初始化标记
-  }, [cancelRequestRef, hasInitializedRef])
+  }, [cancelRequestRef])
 
   /**
    * 发送初始消息
    */
   const sendInitialMessage = useCallback(() => {
-    if (!hasInitializedRef.current && messages.length === 0 && !isLoading) {
-      hasInitializedRef.current = true
+    if (!hasInitialized && messages.length === 0 && !isLoading) {
+      setHasInitialized(true)
       handleSendMessage(DEFAULT_MESSAGES.INITIAL)
     }
-  }, [messages.length, isLoading, handleSendMessage, hasInitializedRef])
+  }, [hasInitialized, messages.length, isLoading, setHasInitialized, handleSendMessage])
 
   return {
     handleSendMessage,

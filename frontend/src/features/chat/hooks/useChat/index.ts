@@ -21,8 +21,9 @@ export function useChat(): UseChatReturn {
     isLoading,
     setIsLoading,
     chatId,
-    cancelRequestRef,
-    hasInitializedRef
+    hasInitialized,
+    setHasInitialized,
+    cancelRequestRef
   } = useChatState()
 
   // 2. 操作方法
@@ -36,8 +37,9 @@ export function useChat(): UseChatReturn {
     isLoading,
     setIsLoading,
     chatId,
-    cancelRequestRef,
-    hasInitializedRef
+    hasInitialized,
+    setHasInitialized,
+    cancelRequestRef
   })
 
   return {

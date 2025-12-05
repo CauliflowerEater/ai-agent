@@ -12,9 +12,10 @@ export function useChatState() {
   const isLoading = useChatStore((state) => state.isLoading)
   const setIsLoading = useChatStore((state) => state.setIsLoading)
   const chatId = useChatStore((state) => state.chatId)
+  const hasInitialized = useChatStore((state) => state.hasInitialized)
+  const setHasInitialized = useChatStore((state) => state.setHasInitialized)
   
   const cancelRequestRef = useRef<(() => void) | null>(null)
-  const hasInitializedRef = useRef<boolean>(false) // 标记是否已初始化
 
   return {
     messages,
@@ -22,7 +23,8 @@ export function useChatState() {
     isLoading,
     setIsLoading,
     chatId,
-    cancelRequestRef,
-    hasInitializedRef
+    hasInitialized,
+    setHasInitialized,
+    cancelRequestRef
   }
 }

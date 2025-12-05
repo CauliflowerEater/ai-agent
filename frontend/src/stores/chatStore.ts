@@ -11,6 +11,7 @@ interface ChatState {
   messages: Message[]
   isLoading: boolean
   chatId: string
+  hasInitialized: boolean  // 是否已发送初始消息
   
   // Actions
   setMessages: (messages: Message[] | ((prev: Message[]) => Message[])) => void
@@ -18,6 +19,7 @@ interface ChatState {
   updateMessage: (id: string, updates: Partial<Message>) => void
   clearMessages: () => void
   setIsLoading: (loading: boolean) => void
+  setHasInitialized: (initialized: boolean) => void
   resetChat: () => void
 }
 
@@ -31,6 +33,7 @@ export const useChatStore = create<ChatState>()(
         messages: [],
         isLoading: false,
         chatId: generateChatId(),
+        hasInitialized: false,
         
         // Actions
         setMessages: (messages) =>
@@ -56,11 +59,15 @@ export const useChatStore = create<ChatState>()(
         setIsLoading: (loading) =>
           set({ isLoading: loading }),
         
+        setHasInitialized: (initialized) =>
+          set({ hasInitialized: initialized }),
+        
         resetChat: () =>
           set({
             messages: [],
             isLoading: false,
-            chatId: generateChatId()
+            chatId: generateChatId(),
+            hasInitialized: false
           })
       }),
       {
