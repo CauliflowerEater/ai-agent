@@ -11,6 +11,7 @@ export interface UseAutoScrollReturn {
 }
 
 export interface ScrollControlReturn {
+  jumpToBottom: () => void
   scrollToBottom: () => void
   scrollToPosition: (position: number) => void
   isProgrammaticScrollRef: MutableRefObject<boolean>

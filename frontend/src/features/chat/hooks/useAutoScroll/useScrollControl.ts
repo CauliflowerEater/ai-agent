@@ -13,17 +13,39 @@ export function useScrollControl(
   const isProgrammaticScrollRef = useRef(false)
   
   /**
-   * 滚动到底部
+   * 跳转到底部（瞬间，无动画）
+   */
+  const jumpToBottom = useCallback(() => {
+    if (!scrollContainerRef.current) return
+    
+    isProgrammaticScrollRef.current = true
+    // 直接设置 scrollTop 到最大值，实现瞬间跳转
+    scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight
+    
+    // 使用 requestAnimationFrame 确保 scroll 事件处理完成后再重置标志位
+    requestAnimationFrame(() => {
+      isProgrammaticScrollRef.current = false
+    })
+  }, [scrollContainerRef])
+  
+  /**
+   * 滚动到底部（平滑滚动）
    */
   const scrollToBottom = useCallback(() => {
-    isProgrammaticScrollRef.current = true
-    scrollBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (!scrollContainerRef.current) return
     
-    // 延迟重置标志位，等待滚动完成
+    isProgrammaticScrollRef.current = true
+    // 使用 scrollTo 实现平滑滚动
+    scrollContainerRef.current.scrollTo({
+      top: scrollContainerRef.current.scrollHeight,
+      behavior: 'smooth'
+    })
+    
+    // 使用 setTimeout 等待滚动动画完成后再重置标志位
     setTimeout(() => {
       isProgrammaticScrollRef.current = false
-    }, 100)
-  }, [scrollBottomRef])
+    }, 500)
+  }, [scrollContainerRef])
   
   /**
    * 滚动到指定位置
@@ -34,12 +56,14 @@ export function useScrollControl(
     isProgrammaticScrollRef.current = true
     scrollContainerRef.current.scrollTop = position
     
-    setTimeout(() => {
+    // 使用 requestAnimationFrame 确保 scroll 事件处理完成后再重置标志位
+    requestAnimationFrame(() => {
       isProgrammaticScrollRef.current = false
-    }, 100)
+    })
   }, [scrollContainerRef])
   
   return {
+    jumpToBottom,
     scrollToBottom,
     scrollToPosition,
     isProgrammaticScrollRef

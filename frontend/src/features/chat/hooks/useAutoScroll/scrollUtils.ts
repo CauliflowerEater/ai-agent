@@ -73,8 +73,8 @@ export function scrollToLastUserMessage(
   // 滚动到用户消息底部位置
   container.scrollTop = messageBottom
   
-  // 延迟重置标志位
-  setTimeout(() => {
+  // 使用 requestAnimationFrame 确保 scroll 事件处理完成后再重置标志位
+  requestAnimationFrame(() => {
     isProgrammaticScrollRef.current = false
-  }, 100)
+  })
 }

@@ -45,10 +45,10 @@ export function useMessageDetection(
         prevMessageCount
       )
       
-      // 用户发送了新消息，强制滚动到底部并启用自动滚动
+      // 用户发送了新消息，跳转到底部并启用自动滚动
       if (hasUserMessage) {
         setAutoScroll(true)
-        scrollControl.scrollToBottom()
+        scrollControl.jumpToBottom()  // 用户输入时使用跳转
         prevMessageCountRef.current = currentMessageCount
         prevScrollHeightRef.current = scrollHeight
         return
@@ -57,7 +57,7 @@ export function useMessageDetection(
       // 有新消息但不包含用户消息且不在加载中
       if (!isLoading) {
         setAutoScroll(true)
-        scrollControl.scrollToBottom()
+        scrollControl.jumpToBottom()  // 非流式场景使用跳转
         prevMessageCountRef.current = currentMessageCount
         prevScrollHeightRef.current = scrollHeight
         return
@@ -79,7 +79,7 @@ export function useMessageDetection(
       const totalDelta = scrollHeight - actualStartHeight
       
       if (totalDelta <= clientHeight) {
-        // 总增量不超过一屏，继续实时滚动
+        // 总增量不超过一屏，继续实时滚动（LLM输出时使用平滑滚动）
         scrollControl.scrollToBottom()
       } else {
         // 总增量已超过一屏，滚动到用户最后一条消息的底部
