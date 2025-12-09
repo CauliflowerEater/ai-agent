@@ -17,9 +17,3 @@ export interface StreamHandlers {
   onComplete: () => void
   onError: (error: Error) => void
 }
-
-export interface MessageState {
-  currentMessageId: string
-  textBuffer: string
-  currentSegmentContent: string
-}

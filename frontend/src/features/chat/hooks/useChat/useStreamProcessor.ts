@@ -1,118 +1,204 @@
 /**
  * SSE 流式响应处理器 Hook
- * 处理分段文本、缓冲区管理
+ * 组合子 Hook 实现完整的流式处理功能
  */
 
-import { useRef } from 'react'
+import { useRef, useCallback } from 'react'
 import { CHUNK_DELIMITER } from './constants'
 import { generateSegmentMessageId, updateMessageContent, addMessage } from './messageUtils'
 import { createAssistantMessage } from '../../utils/messageUtils'
 import { DEFAULT_MESSAGES } from '../../constants/messages'
 import type { Message } from '../../types'
-import type { StreamHandlers, MessageState } from './types'
+import type { StreamHandlers } from './types'
+import { useSegmentQueue } from './useSegmentQueue'
+import { useStreamBuffer } from './useStreamBuffer'
+import { useSegmentOutput } from './useSegmentOutput'
+import { shouldCreateNewBubble } from './streamUtils'
+
+// 输出配置
+const OUTPUT_CONFIG = {
+  SEGMENT_INTERVAL: 500  // 段落输出间隔（ms）
+}
+
+interface StreamState {
+  currentMessageId: string
+  currentSegmentContent: string
+  streamEnded: boolean
+}
 
 export function useStreamProcessor(
   setMessages: (messages: Message[] | ((prev: Message[]) => Message[])) => void,
   setIsLoading: (loading: boolean) => void,
   cancelRequestRef: React.MutableRefObject<(() => void) | null>
 ) {
-  const messageStateRef = useRef<MessageState>({
+  const stateRef = useRef<StreamState>({
     currentMessageId: '',
-    textBuffer: '',
-    currentSegmentContent: ''
+    currentSegmentContent: '',
+    streamEnded: false
   })
+
+  // 使用子 Hook
+  const queue = useSegmentQueue()
+  const buffer = useStreamBuffer({ delimiter: CHUNK_DELIMITER })
+  const output = useSegmentOutput({ interval: OUTPUT_CONFIG.SEGMENT_INTERVAL })
+
+  // 辅助函数：更新当前消息
+  const updateCurrentMessage = useCallback((content: string, isError = false) => {
+    setMessages(prev => 
+      updateMessageContent(prev, stateRef.current.currentMessageId, content, isError)
+    )
+  }, [setMessages])
+
+  // 辅助函数：创建新消息气泡
+  const createNewMessageBubble = useCallback((content: string) => {
+    stateRef.current.currentMessageId = generateSegmentMessageId()
+    const newMessage = createAssistantMessage(content, false, stateRef.current.currentMessageId)
+    setMessages(prev => addMessage(prev, newMessage))
+    stateRef.current.currentSegmentContent = content
+  }, [setMessages])
+
+  // 辅助函数：结束加载状态
+  const finishLoading = useCallback(() => {
+    setIsLoading(false)
+    cancelRequestRef.current = null
+  }, [setIsLoading, cancelRequestRef])
+
+  // 辅助函数：处理空响应
+  const handleEmptyResponse = useCallback(() => {
+    if (!stateRef.current.currentSegmentContent.trim()) {
+      updateCurrentMessage(DEFAULT_MESSAGES.EMPTY_RESPONSE)
+    }
+  }, [updateCurrentMessage])
+
+  // 辅助函数：处理剩余 buffer 内容
+  const processRemainingBuffer = useCallback(() => {
+    const remaining = buffer.flush()
+    const cleaned = remaining.trim()
+    
+    if (cleaned) {
+      if (!stateRef.current.currentSegmentContent) {
+        stateRef.current.currentSegmentContent = cleaned
+        updateCurrentMessage(cleaned)
+      } else {
+        stateRef.current.currentSegmentContent += cleaned
+        updateCurrentMessage(stateRef.current.currentSegmentContent)
+      }
+    }
+  }, [buffer, updateCurrentMessage])
+
+  // 辅助函数：处理输出完成
+  const handleOutputComplete = useCallback(() => {
+    processRemainingBuffer()
+    finishLoading()
+    handleEmptyResponse()
+  }, [processRemainingBuffer, finishLoading, handleEmptyResponse])
+
+  // 处理下一个段落
+  const processNextSegment = useCallback((): boolean => {
+    if (queue.isEmpty()) {
+      if (stateRef.current.streamEnded) {
+        output.stop()
+        handleOutputComplete()
+      } else {
+        output.stop()
+      }
+      return false
+    }
+
+    const segment = queue.dequeue()!
+    
+    if (shouldCreateNewBubble(stateRef.current.currentSegmentContent)) {
+      createNewMessageBubble(segment)
+    } else {
+      stateRef.current.currentSegmentContent = segment
+      updateCurrentMessage(segment)
+    }
+
+    return true
+  }, [queue, output, handleOutputComplete, createNewMessageBubble, updateCurrentMessage])
+
+  // 启动输出
+  const startOutput = useCallback(() => {
+    if (output.isRunningRef.current) {
+      return
+    }
+
+    output.start(processNextSegment)
+  }, [output, processNextSegment])
 
   /**
    * 创建流式处理回调函数
    */
-  const createStreamHandlers = (initialMessageId: string): StreamHandlers => {
+  const createStreamHandlers = useCallback((initialMessageId: string): StreamHandlers => {
+    // 清理之前的状态
+    output.stop()
+    queue.clear()
+    buffer.clear()
+
     // 重置状态
-    messageStateRef.current = {
+    stateRef.current = {
       currentMessageId: initialMessageId,
-      textBuffer: '',
-      currentSegmentContent: ''
+      currentSegmentContent: '',
+      streamEnded: false
     }
 
     return {
       // 处理数据块
       onChunk: (deltaText: string) => {
-        const state = messageStateRef.current
+        const segments = buffer.appendChunk(deltaText)
         
-        // 1. 把本次增量追加到 buffer
-        state.textBuffer += deltaText
+        segments.forEach(segment => {
+          queue.enqueue(segment)
+        })
 
-        // 2. 反复查找是否出现了完整的分段标记
-        while (true) {
-          const idx = state.textBuffer.indexOf(CHUNK_DELIMITER)
-          if (idx === -1) {
-            // 没有完整标记，等待下一次 delta
-            break
-          }
-
-          // 3. 取出标记前面的内容，作为一个完整段落
-          const segment = state.textBuffer.slice(0, idx)
-          // 4. 把 buffer 剩余部分（标记之后的内容）保留下来
-          state.textBuffer = state.textBuffer.slice(idx + CHUNK_DELIMITER.length)
-
-          // 5. 显示完整段落
-          if (segment.trim()) {
-            if (!state.currentSegmentContent) {
-              // 第一个段落，更新初始气泡
-              state.currentSegmentContent = segment
-              setMessages(prev => 
-                updateMessageContent(prev, state.currentMessageId, segment)
-              )
-            } else {
-              // 创建新气泡显示新段落
-              state.currentMessageId = generateSegmentMessageId()
-              const newMessage = createAssistantMessage(segment, false, state.currentMessageId)
-              setMessages(prev => addMessage(prev, newMessage))
-              state.currentSegmentContent = segment
-            }
-          }
+        if (segments.length > 0 && !output.isRunningRef.current) {
+          startOutput()
         }
       },
 
       // 流结束
       onComplete: () => {
-        const state = messageStateRef.current
-        
-        // 处理 buffer 中剩余的内容
-        const cleaned = state.textBuffer.trim()
-        if (cleaned) {
-          state.currentSegmentContent += state.textBuffer
-          setMessages(prev => 
-            updateMessageContent(prev, state.currentMessageId, state.currentSegmentContent)
-          )
-        }
-        state.textBuffer = ''
-        
-        setIsLoading(false)
-        cancelRequestRef.current = null
-        
-        // 如果没有收到任何内容，显示默认消息
-        if (!state.currentSegmentContent.trim()) {
-          setMessages(prev => 
-            updateMessageContent(prev, state.currentMessageId, DEFAULT_MESSAGES.EMPTY_RESPONSE)
-          )
+        stateRef.current.streamEnded = true
+
+        if (!output.isRunningRef.current) {
+          if (!queue.isEmpty()) {
+            startOutput()
+          } else {
+            // 处理剩余 buffer 内容
+            const remaining = buffer.flush()
+            const cleaned = remaining.trim()
+            
+            if (cleaned) {
+              if (!stateRef.current.currentSegmentContent) {
+                stateRef.current.currentSegmentContent = cleaned
+                updateCurrentMessage(cleaned)
+              } else {
+                stateRef.current.currentSegmentContent += cleaned
+                updateCurrentMessage(stateRef.current.currentSegmentContent)
+              }
+            }
+
+            finishLoading()
+            handleEmptyResponse()
+          }
         }
       },
 
       // 发生错误
       onError: (error: Error) => {
-        const state = messageStateRef.current
-        
         console.error('流式请求错误:', error)
-        setIsLoading(false)
-        cancelRequestRef.current = null
         
-        // 显示错误消息
-        setMessages(prev => 
-          updateMessageContent(prev, state.currentMessageId, DEFAULT_MESSAGES.ERROR, true)
-        )
+        output.stop()
+        queue.clear()
+        buffer.clear()
+        
+        stateRef.current.streamEnded = true
+        
+        finishLoading()
+        updateCurrentMessage(DEFAULT_MESSAGES.ERROR, true)
       }
     }
-  }
+  }, [output, queue, buffer, startOutput, updateCurrentMessage, finishLoading, handleEmptyResponse])
 
   return {
     createStreamHandlers
