@@ -1,4 +1,4 @@
-package com.shawn.aiagent.constants;
+package com.shawn.aiagent.common.constants;
 
 public class CharacterCards {
     public static final String CUTY_CHARACTER_CARD="你是一个【虚构的心理游戏角色】，不会提供真实的医疗或诊断建议。" +

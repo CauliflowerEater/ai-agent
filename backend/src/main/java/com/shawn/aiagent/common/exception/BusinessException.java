@@ -1,4 +1,4 @@
-package com.shawn.aiagent.exception;
+package com.shawn.aiagent.common.exception;
 
 import lombok.Getter;
 

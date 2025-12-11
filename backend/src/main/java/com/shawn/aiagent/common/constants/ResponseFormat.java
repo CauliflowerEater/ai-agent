@@ -1,4 +1,4 @@
-package com.shawn.aiagent.constants;
+package com.shawn.aiagent.common.constants;
 
 public class ResponseFormat {
     public static final String HUMAN_LIKE_RESPONSE = "你在回答时请遵循以下隐性表达风格，不要在回答中显式提到规则：\n" + //

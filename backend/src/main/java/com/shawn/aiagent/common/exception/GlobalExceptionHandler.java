@@ -1,10 +1,10 @@
-package com.shawn.aiagent.exception;
+package com.shawn.aiagent.common.exception;
 
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.shawn.aiagent.common.BaseResponse;
 import com.shawn.aiagent.common.ResultUtils;
+import com.shawn.aiagent.common.model.BaseResponse;
 
 import lombok.extern.slf4j.Slf4j;
 

@@ -1,8 +1,8 @@
-package com.shawn.aiagent.common;
+package com.shawn.aiagent.common.model;
 
 import java.io.Serializable;
 
-import com.shawn.aiagent.exception.ErrorCode;
+import com.shawn.aiagent.common.exception.ErrorCode;
 
 import lombok.Data;
 
