@@ -1,0 +1,32 @@
+[
+  {
+    "text": "我梦见自己在一个陌生的城市里迷路了，四处都是高楼大厦，但找不到回家的路。",
+    "chunk_index": 0,
+    "dream_type": "anxiety",
+    "keywords": ["迷路", "陌生", "城市", "高楼"]
+  },
+  {
+    "text": "梦中我在飞翔，俯瞰着美丽的山川河流，感觉非常自由和快乐。",
+    "chunk_index": 1,
+    "dream_type": "pleasant",
+    "keywords": ["飞翔", "自由", "快乐", "山川"]
+  },
+  {
+    "text": "我梦见已经去世的亲人回来看望我，我们在一起聊天，就像以前一样。",
+    "chunk_index": 2,
+    "dream_type": "memory",
+    "keywords": ["亲人", "去世", "聊天", "回忆"]
+  },
+  {
+    "text": "在梦里，我在考试，但完全不知道答案，时间快到了却还没写完卷子。",
+    "chunk_index": 3,
+    "dream_type": "stress",
+    "keywords": ["考试", "焦虑", "时间", "压力"]
+  },
+  {
+    "text": "梦见自己变成了一只鸟，可以在天空中自由飞翔，看到了以前从未见过的风景。",
+    "chunk_index": 4,
+    "dream_type": "transformation",
+    "keywords": ["变身", "鸟", "飞翔", "风景"]
+  }
+]
