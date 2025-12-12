@@ -3,6 +3,8 @@ package com.shawn.aiagent.rag;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shawn.aiagent.common.exception.DataIntegrityException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.util.*;
 
+@Slf4j
 @Component
 public class DreamsJsonDocumentLoader {
 
@@ -33,12 +36,13 @@ public class DreamsJsonDocumentLoader {
                 // text 字段 = Document 的 content
                 String content = (String) chunk.get("text");
 
-                // 构造一个 id（可选，也可以不加）
-                //todo
-                //埋点
-                //idx不存在应视为异常，应由log捕获;
+                // 构造一个 id（chunk_index 为必填字段，用于保证数据完整性）
                 Object idxObj = chunk.get("chunk_index");
-                String id = idxObj != null ? "dreams-chunk-" + idxObj : UUID.randomUUID().toString();
+                if (idxObj == null) {
+                    log.error("Missing chunk_index in dreams chunk: {}", chunk);
+                    throw new DataIntegrityException("chunk_index is required for dreams chunk. This indicates a data quality issue that should be fixed in development.");
+                }
+                String id = "dreams-chunk-" + idxObj;
 
                 // metadata = 除了 text 以外的所有字段
                 Map<String, Object> metadata = new HashMap<>(chunk);
@@ -54,10 +58,8 @@ public class DreamsJsonDocumentLoader {
 
             return documents;
         } catch (IOException e) {
-            //todo
-            //埋点
-            //确认抛异常是否符合统一格式;
-            throw new RuntimeException("Failed to load dreams_chunks_overlap.json", e);
+            log.error("Failed to load dreams_chunks_overlap.json", e);
+            throw new DataIntegrityException("Failed to load dreams_chunks_overlap.json. Check if the file exists and is properly formatted.", e);
         }
     }
 }

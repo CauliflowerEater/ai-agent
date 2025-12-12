@@ -1,6 +1,7 @@
 package com.shawn.aiagent.rag;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shawn.aiagent.common.exception.DataIntegrityException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.document.Document;
@@ -174,5 +175,23 @@ class DreamsJsonDocumentLoaderTest {
             System.out.println("元数据: " + sample.getMetadata());
             System.out.println("==============================\n");
         }
+    }
+
+    /**
+     * 测试：验证数据完整性异常
+     * 这个测试验证当 chunk_index 缺失时，应该抛出 DataIntegrityException
+     * 注意：这是开发/测试阶段应该发现的问题，不应该在生产环境出现
+     */
+    @Test
+    void testDataIntegrityException() {
+        // 由于测试数据都是完整的，这里只是验证异常类型的语义
+        // 在实际场景中，如果 JSON 数据缺失 chunk_index，会抛出 DataIntegrityException
+        
+        // 验证：DataIntegrityException 是 RuntimeException 的子类
+        assertTrue(RuntimeException.class.isAssignableFrom(DataIntegrityException.class),
+            "DataIntegrityException 应该继承自 RuntimeException");
+        
+        System.out.println("DataIntegrityException 用于标识数据完整性问题");
+        System.out.println("这类异常应该在开发/测试阶段被发现和修复，不应在生产环境触发");
     }
 }

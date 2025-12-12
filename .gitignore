@@ -144,3 +144,5 @@ yarn.lock
 # Application logs
 application.log
 spring.log
+logs/
+*.log

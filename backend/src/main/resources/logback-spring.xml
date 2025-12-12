@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 引入 Spring Boot 默认配置 -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    
+    <!-- 定义日志文件路径 -->
+    <property name="LOG_FILE" value="${LOG_FILE:-${LOG_PATH:-${LOG_TEMP:-${java.io.tmpdir:-/tmp}}}/ai-agent.log}"/>
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"/>
+    
+    <!-- 控制台输出 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN:-%clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 文件输出 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE}</file>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        
+        <!-- 滚动策略 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- 异步日志（适合高性能场景，如流式响应） -->
+    <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="FILE"/>
+    </appender>
+
+    <!-- AI 相关日志单独记录 -->
+    <appender name="AI_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH:-${LOG_TEMP:-${java.io.tmpdir:-/tmp}}}/ai-agent-chat.log</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH:-${LOG_TEMP:-${java.io.tmpdir:-/tmp}}}/ai-agent-chat.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+            <maxFileSize>50MB</maxFileSize>
+            <maxHistory>15</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <!-- 特定包的日志级别 -->
+    
+    <!-- AI 聊天相关 -->
+    <logger name="com.shawn.aiagent.app" level="INFO" additivity="false">
+        <appender-ref ref="AI_LOG"/>
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+    
+    <logger name="com.shawn.aiagent.service" level="INFO" additivity="false">
+        <appender-ref ref="AI_LOG"/>
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
+    <!-- RAG 相关 -->
+    <logger name="com.shawn.aiagent.rag" level="DEBUG"/>
+
+    <!-- Spring AI 框架日志 -->
+    <logger name="org.springframework.ai" level="INFO"/>
+    
+    <!-- Netty 日志（WebFlux 底层） -->
+    <logger name="io.netty" level="WARN"/>
+    <logger name="reactor.netty" level="INFO"/>
+    
+    <!-- Spring WebFlux -->
+    <logger name="org.springframework.web.reactive" level="INFO"/>
+    
+    <!-- 数据库相关（如果使用） -->
+    <logger name="org.springframework.data" level="INFO"/>
+    
+    <!-- 第三方库 -->
+    <logger name="com.alibaba" level="WARN"/>
+    <logger name="dev.langchain4j" level="INFO"/>
+
+    <!-- 开发环境配置 -->
+    <springProfile name="dev,default">
+        <root level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
+
+    <!-- 测试环境配置 -->
+    <springProfile name="test">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
+
+    <!-- 生产环境配置 -->
+    <springProfile name="prod">
+        <root level="INFO">
+            <appender-ref ref="ASYNC"/>
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+</configuration>
