@@ -1,6 +1,7 @@
 package com.shawn.aiagent.common;
 
-import com.shawn.aiagent.exception.ErrorCode;
+import com.shawn.aiagent.common.exception.ErrorCode;
+import com.shawn.aiagent.common.model.BaseResponse;
 
 public class ResultUtils {
 

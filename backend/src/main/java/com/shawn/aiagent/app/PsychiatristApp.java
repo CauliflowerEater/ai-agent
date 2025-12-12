@@ -15,8 +15,8 @@ import org.springframework.ai.chat.model.ChatModel;
 
 import com.shawn.aiagent.advisor.MyLoggerAdvisor;
 import com.shawn.aiagent.advisor.ReReadingAdvisor;
-import com.shawn.aiagent.constants.CharacterCards;
-import com.shawn.aiagent.constants.ResponseFormat;
+import com.shawn.aiagent.common.constants.CharacterCards;
+import com.shawn.aiagent.common.constants.ResponseFormat;
 
 import lombok.extern.slf4j.Slf4j;
 

@@ -1,9 +1,9 @@
 package com.shawn.aiagent.controller;
 
-import com.shawn.aiagent.common.BaseResponse;
 import com.shawn.aiagent.common.ResultUtils;
-import com.shawn.aiagent.model.dto.ChatRequest;
-import com.shawn.aiagent.model.dto.ChatResponse;
+import com.shawn.aiagent.common.model.BaseResponse;
+import com.shawn.aiagent.common.model.dto.ChatRequest;
+import com.shawn.aiagent.common.model.dto.ChatResponse;
 import com.shawn.aiagent.service.ChatService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;

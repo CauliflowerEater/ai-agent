@@ -1,9 +1,10 @@
 package com.shawn.aiagent.service;
 
 import com.shawn.aiagent.app.PsychiatristApp;
-import com.shawn.aiagent.exception.BusinessException;
-import com.shawn.aiagent.exception.ErrorCode;
-import com.shawn.aiagent.exception.ThrowUtils;
+import com.shawn.aiagent.common.exception.BusinessException;
+import com.shawn.aiagent.common.exception.ErrorCode;
+import com.shawn.aiagent.common.exception.ThrowUtils;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
