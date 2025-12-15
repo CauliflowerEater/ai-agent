@@ -2,6 +2,7 @@ package com.shawn.aiagent.rag;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shawn.aiagent.common.exception.DataIntegrityException;
+import com.shawn.aiagent.rag.loader.DreamsJsonDocumentLoader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.document.Document;
@@ -37,7 +38,7 @@ class DreamsJsonDocumentLoaderTest {
     @Test
     void testLoadDreamsDocuments_Success() {
         // 执行加载
-        List<Document> documents = documentLoader.loadDreamsDocuments();
+        List<Document> documents = documentLoader.load();
 
         // 验证：文档列表不为空
         assertNotNull(documents, "文档列表不应为 null");
@@ -53,7 +54,7 @@ class DreamsJsonDocumentLoaderTest {
     @Test
     void testDocumentStructure() {
         // 加载文档
-        List<Document> documents = documentLoader.loadDreamsDocuments();
+        List<Document> documents = documentLoader.load();
         
         // 至少有一个文档
         assertTrue(documents.size() > 0, "应该至少有一个文档");
@@ -92,7 +93,7 @@ class DreamsJsonDocumentLoaderTest {
      */
     @Test
     void testAllDocumentsHaveValidContent() {
-        List<Document> documents = documentLoader.loadDreamsDocuments();
+        List<Document> documents = documentLoader.load();
 
         for (int i = 0; i < documents.size(); i++) {
             Document doc = documents.get(i);
@@ -120,7 +121,7 @@ class DreamsJsonDocumentLoaderTest {
      */
     @Test
     void testMetadataDoesNotContainText() {
-        List<Document> documents = documentLoader.loadDreamsDocuments();
+        List<Document> documents = documentLoader.load();
 
         for (Document doc : documents) {
             Map<String, Object> metadata = doc.getMetadata();
@@ -136,7 +137,7 @@ class DreamsJsonDocumentLoaderTest {
      */
     @Test
     void testChunkIndexInMetadata() {
-        List<Document> documents = documentLoader.loadDreamsDocuments();
+        List<Document> documents = documentLoader.load();
 
         boolean hasChunkIndex = false;
         for (Document doc : documents) {
@@ -164,7 +165,7 @@ class DreamsJsonDocumentLoaderTest {
      */
     @Test
     void testPrintSampleDocument() {
-        List<Document> documents = documentLoader.loadDreamsDocuments();
+        List<Document> documents = documentLoader.load();
 
         if (!documents.isEmpty()) {
             Document sample = documents.get(0);

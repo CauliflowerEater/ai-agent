@@ -1,5 +1,4 @@
-package com.shawn.aiagent.rag;
-
+package com.shawn.aiagent.rag.loader;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,7 +13,7 @@ import java.util.*;
 
 @Slf4j
 @Component
-public class DreamsJsonDocumentLoader {
+public class DreamsJsonDocumentLoader implements DocumentLoader {
 
     private final ObjectMapper objectMapper;
 
@@ -22,9 +21,10 @@ public class DreamsJsonDocumentLoader {
         this.objectMapper = objectMapper;
     }
 
-    public List<Document> loadDreamsDocuments() {
+    @Override
+    public List<Document> load() {
         try {
-            var resource = new ClassPathResource("rag/dreams_chunks_overlap.json");
+            var resource = new ClassPathResource("rag/dreams_chunks.json");
             List<Map<String, Object>> rawChunks = objectMapper.readValue(
                     resource.getInputStream(),
                     new TypeReference<List<Map<String, Object>>>() {}
@@ -58,8 +58,9 @@ public class DreamsJsonDocumentLoader {
 
             return documents;
         } catch (IOException e) {
-            log.error("Failed to load dreams_chunks_overlap.json", e);
-            throw new DataIntegrityException("Failed to load dreams_chunks_overlap.json. Check if the file exists and is properly formatted.", e);
+            log.error("Failed to load dreams_chunks.json", e);
+            throw new DataIntegrityException("Failed to load dreams_chunks.json. Check if the file exists and is properly formatted.", e);
         }
     }
 }
+
