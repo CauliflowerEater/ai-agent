@@ -2,8 +2,9 @@ package com.shawn.aiagent.controller;
 
 import com.shawn.aiagent.common.ResultUtils;
 import com.shawn.aiagent.common.model.BaseResponse;
+import com.shawn.aiagent.common.model.DryRunResult;
+import com.shawn.aiagent.common.model.ReindexResult;
 import com.shawn.aiagent.service.RagService;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -51,16 +52,9 @@ public class RagController {
     /**
      * 执行 dryRun 预览（私有方法）
      */
-    private Mono<BaseResponse<DryRunResponse>> executeDryRun() {
+    private Mono<BaseResponse<DryRunResult>> executeDryRun() {
         return ragService.dryRun()
-                .map(result -> {
-                    DryRunResponse response = new DryRunResponse();
-                    response.setChunkCount(result.getChunkCount());
-                    response.setCollectionName(result.getCollectionName());
-                    response.setEmbeddingModelName(result.getEmbeddingModelName());
-                    response.setEmbeddingDim(result.getEmbeddingDim());
-                    return ResultUtils.success(response);
-                })
+                .map(ResultUtils::success)
                 .onErrorResume(e -> {
                     log.error("dryRun 预览失败", e);
                     return Mono.just(new BaseResponse<>(500, null, "dryRun 预览失败: " + e.getMessage()));
@@ -70,60 +64,13 @@ public class RagController {
     /**
      * 执行实际的重新索引操作（私有方法）
      */
-    private Mono<BaseResponse<ReindexResponse>> executeReindex() {
+    private Mono<BaseResponse<ReindexResult>> executeReindex() {
         return ragService.reindex()
-                .map(result -> {
-                    ReindexResponse response = new ReindexResponse();
-                    response.setDocumentCount(result.getDocumentCount());
-                    response.setMessage(result.getMessage());
-                    return ResultUtils.success(response);
-                })
+                .map(ResultUtils::success)
                 .onErrorResume(e -> {
                     log.error("重新索引失败", e);
                     return Mono.just(new BaseResponse<>(500, null, "重新索引失败: " + e.getMessage()));
                 });
-    }
-
-    /**
-     * 重新索引响应数据
-     */
-    @Data
-    public static class ReindexResponse {
-        /**
-         * 成功加载的文档数量
-         */
-        private int documentCount;
-        
-        /**
-         * 响应消息
-         */
-        private String message;
-    }
-
-    /**
-     * dryRun 预览响应数据
-     */
-    @Data
-    public static class DryRunResponse {
-        /**
-         * chunk 数量
-         */
-        private int chunkCount;
-        
-        /**
-         * 预计 collection 名
-         */
-        private String collectionName;
-        
-        /**
-         * 当前配置的 embedding 模型名
-         */
-        private String embeddingModelName;
-        
-        /**
-         * embedding 维度
-         */
-        private int embeddingDim;
     }
 }
 

@@ -28,12 +28,14 @@ public class DreamsRagIngestor extends RagIngestionService {
      * @param documentLoader DreamsJsonDocumentLoader 具体实现
      * @param vectorStoreWriter 向量存储写入器
      * @param embeddingService Embedding 服务（可选，可以为 null）
+     * @param batchProcessor 批次处理器
      */
     public DreamsRagIngestor(
             DreamsJsonDocumentLoader documentLoader,
             VectorStoreWriter vectorStoreWriter,
-            @Nullable EmbeddingService embeddingService) {
-        super(documentLoader, vectorStoreWriter, embeddingService);
+            @Nullable EmbeddingService embeddingService,
+            BatchProcessor batchProcessor) {
+        super(documentLoader, vectorStoreWriter, embeddingService, batchProcessor);
     }
 
     /**

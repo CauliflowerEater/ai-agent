@@ -2,6 +2,8 @@ package com.shawn.aiagent.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shawn.aiagent.common.model.BaseResponse;
+import com.shawn.aiagent.common.model.DryRunResult;
+import com.shawn.aiagent.common.model.ReindexResult;
 import com.shawn.aiagent.service.RagService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -42,7 +44,7 @@ class RagControllerTest {
     @DisplayName("测试 dryRun=true（默认值）- 成功场景")
     void testReindex_DryRunTrue_Success() {
         // 准备测试数据
-        RagService.DryRunResult dryRunResult = new RagService.DryRunResult();
+        DryRunResult dryRunResult = new DryRunResult();
         dryRunResult.setChunkCount(100);
         dryRunResult.setCollectionName("test_collection");
         dryRunResult.setEmbeddingModelName("text-embedding-v2");
@@ -62,8 +64,8 @@ class RagControllerTest {
                     assertNotNull(response.getData());
                     
                     // 验证响应数据
-                    RagController.DryRunResponse data = 
-                            objectMapper.convertValue(response.getData(), RagController.DryRunResponse.class);
+                    DryRunResult data = 
+                            objectMapper.convertValue(response.getData(), DryRunResult.class);
                     assertEquals(100, data.getChunkCount());
                     assertEquals("test_collection", data.getCollectionName());
                     assertEquals("text-embedding-v2", data.getEmbeddingModelName());
@@ -79,7 +81,7 @@ class RagControllerTest {
     @DisplayName("测试 dryRun=true（显式指定）- 成功场景")
     void testReindex_DryRunTrue_Explicit_Success() {
         // 准备测试数据
-        RagService.DryRunResult dryRunResult = new RagService.DryRunResult();
+        DryRunResult dryRunResult = new DryRunResult();
         dryRunResult.setChunkCount(200);
         dryRunResult.setCollectionName("dreams_collection");
         dryRunResult.setEmbeddingModelName("text-embedding-v3");
@@ -101,8 +103,8 @@ class RagControllerTest {
                     assertEquals(200, response.getCode());
                     assertNotNull(response.getData());
                     
-                    RagController.DryRunResponse data = 
-                            objectMapper.convertValue(response.getData(), RagController.DryRunResponse.class);
+                    DryRunResult data = 
+                            objectMapper.convertValue(response.getData(), DryRunResult.class);
                     assertEquals(200, data.getChunkCount());
                     assertEquals("dreams_collection", data.getCollectionName());
                     assertEquals("text-embedding-v3", data.getEmbeddingModelName());
@@ -118,7 +120,7 @@ class RagControllerTest {
     @DisplayName("测试 dryRun=false - 成功场景")
     void testReindex_DryRunFalse_Success() {
         // 准备测试数据
-        RagService.ReindexResult reindexResult = new RagService.ReindexResult();
+        ReindexResult reindexResult = new ReindexResult();
         reindexResult.setDocumentCount(50);
         reindexResult.setMessage("重新索引成功");
 
@@ -138,8 +140,8 @@ class RagControllerTest {
                     assertEquals(200, response.getCode());
                     assertNotNull(response.getData());
                     
-                    RagController.ReindexResponse data = 
-                            objectMapper.convertValue(response.getData(), RagController.ReindexResponse.class);
+                    ReindexResult data = 
+                            objectMapper.convertValue(response.getData(), ReindexResult.class);
                     assertEquals(50, data.getDocumentCount());
                     assertEquals("重新索引成功", data.getMessage());
                 });
@@ -202,7 +204,7 @@ class RagControllerTest {
     @DisplayName("测试 dryRun 参数边界值 - false 字符串")
     void testReindex_DryRunFalse_String() {
         // 准备测试数据
-        RagService.ReindexResult reindexResult = new RagService.ReindexResult();
+        ReindexResult reindexResult = new ReindexResult();
         reindexResult.setDocumentCount(30);
         reindexResult.setMessage("重新索引成功");
 
@@ -229,10 +231,10 @@ class RagControllerTest {
     }
 
     @Test
-    @DisplayName("测试响应数据结构 - DryRunResponse")
-    void testDryRunResponse_DataStructure() {
+    @DisplayName("测试响应数据结构 - DryRunResult")
+    void testDryRunResult_DataStructure() {
         // 准备测试数据
-        RagService.DryRunResult dryRunResult = new RagService.DryRunResult();
+        DryRunResult dryRunResult = new DryRunResult();
         dryRunResult.setChunkCount(0);
         dryRunResult.setCollectionName("");
         dryRunResult.setEmbeddingModelName("");
@@ -251,9 +253,9 @@ class RagControllerTest {
                     assertEquals(200, response.getCode());
                     assertNotNull(response.getData());
                     
-                    // 验证可以正确转换为 DryRunResponse
-                    RagController.DryRunResponse data = 
-                            objectMapper.convertValue(response.getData(), RagController.DryRunResponse.class);
+                    // 验证可以正确转换为 DryRunResult
+                    DryRunResult data = 
+                            objectMapper.convertValue(response.getData(), DryRunResult.class);
                     assertNotNull(data);
                     assertEquals(0, data.getChunkCount());
                     assertEquals("", data.getCollectionName());
@@ -263,10 +265,10 @@ class RagControllerTest {
     }
 
     @Test
-    @DisplayName("测试响应数据结构 - ReindexResponse")
-    void testReindexResponse_DataStructure() {
+    @DisplayName("测试响应数据结构 - ReindexResult")
+    void testReindexResult_DataStructure() {
         // 准备测试数据
-        RagService.ReindexResult reindexResult = new RagService.ReindexResult();
+        ReindexResult reindexResult = new ReindexResult();
         reindexResult.setDocumentCount(0);
         reindexResult.setMessage("");
 
@@ -286,9 +288,9 @@ class RagControllerTest {
                     assertEquals(200, response.getCode());
                     assertNotNull(response.getData());
                     
-                    // 验证可以正确转换为 ReindexResponse
-                    RagController.ReindexResponse data = 
-                            objectMapper.convertValue(response.getData(), RagController.ReindexResponse.class);
+                    // 验证可以正确转换为 ReindexResult
+                    ReindexResult data = 
+                            objectMapper.convertValue(response.getData(), ReindexResult.class);
                     assertNotNull(data);
                     assertEquals(0, data.getDocumentCount());
                     assertEquals("", data.getMessage());

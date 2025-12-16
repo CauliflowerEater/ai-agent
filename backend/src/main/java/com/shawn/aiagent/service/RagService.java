@@ -1,9 +1,10 @@
 package com.shawn.aiagent.service;
 
+import com.shawn.aiagent.common.model.DryRunResult;
+import com.shawn.aiagent.common.model.ReindexResult;
 import com.shawn.aiagent.rag.embedding.EmbeddingService;
 import com.shawn.aiagent.rag.ingest.DreamsRagIngestor;
 import com.shawn.aiagent.rag.loader.DreamsJsonDocumentLoader;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -118,48 +119,6 @@ public class RagService {
             }
         })
         .subscribeOn(Schedulers.boundedElastic()); // 在非响应式线程池中执行
-    }
-
-    /**
-     * 重新索引结果
-     */
-    @Data
-    public static class ReindexResult {
-        /**
-         * 成功加载的文档数量
-         */
-        private int documentCount;
-        
-        /**
-         * 响应消息
-         */
-        private String message;
-    }
-
-    /**
-     * dryRun 预览结果
-     */
-    @Data
-    public static class DryRunResult {
-        /**
-         * chunk 数量
-         */
-        private int chunkCount;
-        
-        /**
-         * 预计 collection 名
-         */
-        private String collectionName;
-        
-        /**
-         * 当前配置的 embedding 模型名
-         */
-        private String embeddingModelName;
-        
-        /**
-         * embedding 维度
-         */
-        private int embeddingDim;
     }
 }
 
