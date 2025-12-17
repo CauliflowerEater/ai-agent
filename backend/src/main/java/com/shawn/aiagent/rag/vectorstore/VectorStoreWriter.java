@@ -38,19 +38,45 @@ public class VectorStoreWriter {
 
     /**
      * 批量添加文档到向量存储
+     * 将文档列表分批处理，每批最多 20 个文档，避免一次性处理过多文档
      *
      * @param documents 待添加的文档列表
      */
     public void addDocuments(List<Document> documents) {
-        log.debug("开始批量添加文档到向量存储，文档数量: {}", documents.size());
-        try {
-            vectorStore.add(documents);
-            log.info("成功批量添加文档到向量存储，文档数量: {}", documents.size());
-        } catch (Exception e) {
-            log.error("批量添加文档到向量存储失败，文档数量: {}, 错误: {}", 
-                    documents.size(), e.getMessage(), e);
-            throw new RuntimeException("批量添加文档到向量存储失败", e);
+        if (documents == null || documents.isEmpty()) {
+            log.debug("文档列表为空，跳过添加");
+            return;
         }
+        
+        final int batchSize = 20;
+        int totalSize = documents.size();
+        int totalBatches = (totalSize + batchSize - 1) / batchSize;
+        
+        log.debug("开始批量添加文档到向量存储，文档数量: {}, 批次大小: {}, 总批次数: {}", 
+                totalSize, batchSize, totalBatches);
+        
+        int successCount = 0;
+        for (int i = 0; i < totalSize; i += batchSize) {
+            int endIndex = Math.min(i + batchSize, totalSize);
+            List<Document> batch = documents.subList(i, endIndex);
+            int batchNumber = (i / batchSize) + 1;
+            
+            try {
+                log.debug("处理第 {}/{} 批，文档数量: {}", batchNumber, totalBatches, batch.size());
+                vectorStore.add(batch);
+                successCount += batch.size();
+                log.info("第 {}/{} 批添加成功，已添加: {}/{}", 
+                        batchNumber, totalBatches, successCount, totalSize);
+            } catch (Exception e) {
+                log.error("第 {}/{} 批添加失败，文档数量: {}, 已成功添加: {}/{}, 错误: {}", 
+                        batchNumber, totalBatches, batch.size(), successCount, totalSize, e.getMessage(), e);
+                throw new RuntimeException(
+                        String.format("批量添加文档到向量存储失败，第 %d/%d 批处理失败，已成功添加 %d/%d 个文档", 
+                                batchNumber, totalBatches, successCount, totalSize), e);
+            }
+        }
+        
+        log.info("成功批量添加文档到向量存储，总文档数量: {}", successCount);
     }
 
     /**

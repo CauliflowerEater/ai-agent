@@ -75,11 +75,11 @@ public abstract class RagIngestionService {
             }
             
             // Transform: 对文档进行转换处理（可选）
-            List<Document> transformedDocuments = transform(documents);
-            log.info("成功转换 {} 个文档", transformedDocuments.size());
+            // List<Document> transformedDocuments = transform(documents);
+            // log.info("成功转换 {} 个文档", transformedDocuments.size());
             
             // Load: 将文档分批写入向量存储（带超时控制）
-            int loadedCount = batchProcessor.processInBatches(transformedDocuments, this::load);
+            int loadedCount = batchProcessor.processInBatches(documents, this::load);
             log.info("成功将 {} 个文档写入向量存储", loadedCount);
             
             return loadedCount;

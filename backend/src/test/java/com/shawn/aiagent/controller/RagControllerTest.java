@@ -83,7 +83,7 @@ class RagControllerTest {
         // 准备测试数据
         DryRunResult dryRunResult = new DryRunResult();
         dryRunResult.setChunkCount(200);
-        dryRunResult.setCollectionName("dreams_collection");
+        dryRunResult.setTableName("dreams_collection");
         dryRunResult.setEmbeddingModelName("text-embedding-v3");
         dryRunResult.setEmbeddingDim(2048);
 
@@ -236,7 +236,7 @@ class RagControllerTest {
         // 准备测试数据
         DryRunResult dryRunResult = new DryRunResult();
         dryRunResult.setChunkCount(0);
-        dryRunResult.setCollectionName("");
+        dryRunResult.setTableName("");
         dryRunResult.setEmbeddingModelName("");
         dryRunResult.setEmbeddingDim(0);
 

@@ -60,17 +60,9 @@ public class DreamsRagIngestor extends RagIngestionService {
      */
     @Override
     protected List<Document> transform(List<Document> documents) {
-        log.debug("开始转换文档，文档数量: {}", documents.size());
-        
-        // 可选：使用父类的 embedDocument 钩子方法进行文档验证
-        // 注意：这是可选的扩展点，VectorStore 会自动处理 embedding
-        for (Document document : documents) {
-            float[] embedding = embedDocument(document);
-            if (embedding != null) {
-                log.trace("文档 {} 显式向量化成功，维度: {}", document.getId(), embedding.length);
-            }
-        }
-        
+        // Transform 阶段已禁用：VectorStore.add() 会自动处理 embedding
+        // 避免重复 embedding 造成性能浪费
+        log.debug("跳过转换阶段（Transform 已禁用），直接返回文档，文档数量: {}", documents.size());
         return documents;
     }
 

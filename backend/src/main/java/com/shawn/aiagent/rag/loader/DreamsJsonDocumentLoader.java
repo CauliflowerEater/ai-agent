@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -42,14 +43,21 @@ public class DreamsJsonDocumentLoader implements DocumentLoader {
                     log.error("Missing chunk_index in dreams chunk: {}", chunk);
                     throw new DataIntegrityException("chunk_index is required for dreams chunk. This indicates a data quality issue that should be fixed in development.");
                 }
-                String id = "dreams-chunk-" + idxObj;
+                // 原始 ID（用于调试和查询）
+                String originalId = "dreams-chunk-" + idxObj;
+                
+                // pgvector 要求使用 UUID 格式的 ID，使用 UUID v5（基于命名空间和原始 ID）保持可预测性
+                // 命名空间：dreams 数据集的固定 UUID
+                UUID namespace = UUID.fromString("6ba7b810-9dad-11d1-80b4-00c04fd430c8"); // 使用标准命名空间 UUID
+                String id = UUID.nameUUIDFromBytes((namespace.toString() + originalId).getBytes()).toString();
 
                 // metadata = 除了 text 以外的所有字段
                 Map<String, Object> metadata = new HashMap<>(chunk);
                 metadata.remove("text");
 
-                // 把 id 也放 metadata 里，方便检索时看到
-                metadata.put("id", id);
+                // 把原始 id 也放 metadata 里，方便检索时看到
+                metadata.put("originalId", originalId);
+                metadata.put("id", originalId); // 保留原始 ID 用于兼容性
                 metadata.put("source", "dreams");  // 方便以后混多个语料
 
                 Document doc = new Document(id, content, metadata);
