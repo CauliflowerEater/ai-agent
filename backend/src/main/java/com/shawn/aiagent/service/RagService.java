@@ -31,8 +31,8 @@ public class RagService {
     @Resource
     private EmbeddingService embeddingService;
 
-    @Value("${spring.ai.vectorstore.milvus.collection-name}")
-    private String collectionName;
+    @Value("${spring.ai.vectorstore.pgvector.table-name}")
+    private String tableName;
 
     @Value("${spring.ai.dashscope.embedding.options.model}")
     private String embeddingModelName;
@@ -89,7 +89,7 @@ public class RagService {
 
     /**
      * 执行 dryRun 预览
-     * 返回 chunk 数量、collection 名、embedding 模型名和维度，但不实际执行索引操作
+     * 返回 chunk 数量、表名、embedding 模型名和维度，但不实际执行索引操作
      * 
      * @return Mono<DryRunResult> dryRun 预览结果
      */
@@ -106,12 +106,12 @@ public class RagService {
                 
                 DryRunResult result = new DryRunResult();
                 result.setChunkCount(chunkCount);
-                result.setCollectionName(collectionName);
+                result.setTableName(tableName);
                 result.setEmbeddingModelName(embeddingModelName);
                 result.setEmbeddingDim(embeddingDim);
                 
-                log.info("dryRun 预览完成，chunk 数量: {}, collection: {}, 模型: {}, 维度: {}", 
-                        chunkCount, collectionName, embeddingModelName, embeddingDim);
+                log.info("dryRun 预览完成，chunk 数量: {}, table: {}, 模型: {}, 维度: {}", 
+                        chunkCount, tableName, embeddingModelName, embeddingDim);
                 return result;
             } catch (Exception e) {
                 log.error("dryRun 预览失败", e);

@@ -31,7 +31,7 @@ public class RagController {
      * 根据 dryRun 参数决定执行实际索引操作还是预览操作
      * 
      * @param dryRun 是否执行 dryRun 预览（默认为 true）
-     *                - true: 返回 chunk 数量、collection 名、embedding 模型名和维度，但不实际执行索引操作
+     *                - true: 返回 chunk 数量、表名、embedding 模型名和维度，但不实际执行索引操作
      *                - false: 执行实际的重新索引操作，从数据源加载文档，进行向量化处理，并写入向量存储
      * @return Mono<BaseResponse<Object>> 重新索引结果或 dryRun 预览结果
      */

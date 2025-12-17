@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * 向量存储写入器
- * 负责将 Document 写入到 Milvus 向量数据库
+ * 负责将 Document 写入到 PostgreSQL + pgvector 向量数据库
  */
 @Component
 @Slf4j

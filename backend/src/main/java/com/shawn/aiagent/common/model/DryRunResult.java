@@ -18,9 +18,9 @@ public class DryRunResult implements Serializable {
     private int chunkCount;
     
     /**
-     * 预计 collection 名
+     * 预计表名（table name）
      */
-    private String collectionName;
+    private String tableName;
     
     /**
      * 当前配置的 embedding 模型名

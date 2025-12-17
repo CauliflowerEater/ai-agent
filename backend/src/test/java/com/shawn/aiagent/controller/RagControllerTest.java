@@ -46,7 +46,7 @@ class RagControllerTest {
         // 准备测试数据
         DryRunResult dryRunResult = new DryRunResult();
         dryRunResult.setChunkCount(100);
-        dryRunResult.setCollectionName("test_collection");
+        dryRunResult.setTableName("test_table");
         dryRunResult.setEmbeddingModelName("text-embedding-v2");
         dryRunResult.setEmbeddingDim(1536);
 
@@ -67,7 +67,7 @@ class RagControllerTest {
                     DryRunResult data = 
                             objectMapper.convertValue(response.getData(), DryRunResult.class);
                     assertEquals(100, data.getChunkCount());
-                    assertEquals("test_collection", data.getCollectionName());
+                    assertEquals("test_table", data.getTableName());
                     assertEquals("text-embedding-v2", data.getEmbeddingModelName());
                     assertEquals(1536, data.getEmbeddingDim());
                 });
@@ -106,7 +106,7 @@ class RagControllerTest {
                     DryRunResult data = 
                             objectMapper.convertValue(response.getData(), DryRunResult.class);
                     assertEquals(200, data.getChunkCount());
-                    assertEquals("dreams_collection", data.getCollectionName());
+                    assertEquals("dreams_table", data.getTableName());
                     assertEquals("text-embedding-v3", data.getEmbeddingModelName());
                     assertEquals(2048, data.getEmbeddingDim());
                 });
@@ -258,7 +258,7 @@ class RagControllerTest {
                             objectMapper.convertValue(response.getData(), DryRunResult.class);
                     assertNotNull(data);
                     assertEquals(0, data.getChunkCount());
-                    assertEquals("", data.getCollectionName());
+                    assertEquals("", data.getTableName());
                     assertEquals("", data.getEmbeddingModelName());
                     assertEquals(0, data.getEmbeddingDim());
                 });
