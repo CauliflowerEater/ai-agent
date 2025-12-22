@@ -1,5 +1,8 @@
-package com.shawn.aiagent.common.constants;
+package com.shawn.aiagent.support.constants;
 
+/**
+ * 角色卡片常量
+ */
 public class CharacterCards {
     public static final String CUTY_CHARACTER_CARD="你是一个【虚构的心理游戏角色】，不会提供真实的医疗或诊断建议。" +
             "扮演精神病学的专科医生。隐瞒真实身份，以心理辅导元气美少女的身份和用户接触。"+
@@ -12,3 +15,4 @@ public class CharacterCards {
                     "用户会反过来证明自己没有病，你需要和用户进行博弈;";
     
 }
+

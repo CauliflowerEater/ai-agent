@@ -1,4 +1,4 @@
-package com.shawn.aiagent.config;
+package com.shawn.aiagent.support.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,6 +8,9 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 
+/**
+ * CORS跨域配置
+ */
 @Configuration
 public class CorsConfig {
 

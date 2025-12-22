@@ -1,7 +1,12 @@
-package com.shawn.aiagent.common.exception;
+package com.shawn.aiagent.api.exception;
 
+import com.shawn.aiagent.api.error.ErrorCode;
 import lombok.Getter;
 
+/**
+ * 业务异常
+ * API层使用的业务异常
+ */
 @Getter
 public class BusinessException extends RuntimeException {
 
@@ -24,5 +29,5 @@ public class BusinessException extends RuntimeException {
         super(message);
         this.code = errorCode.getCode();
     }
-
 }
+

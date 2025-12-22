@@ -1,4 +1,4 @@
-package com.shawn.aiagent.advisor;
+package com.shawn.aiagent.support.advisor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -90,3 +90,4 @@ public class MyLoggerAdvisor implements CallAdvisor, StreamAdvisor {
                 .aggregateChatClientResponse(responses, this::observeAfter);
     }
 }
+

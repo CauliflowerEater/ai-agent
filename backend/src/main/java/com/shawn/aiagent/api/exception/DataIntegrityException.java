@@ -1,4 +1,4 @@
-package com.shawn.aiagent.common.exception;
+package com.shawn.aiagent.api.exception;
 
 /**
  * 数据完整性异常
@@ -19,3 +19,4 @@ public class DataIntegrityException extends RuntimeException {
         super(message, cause);
     }
 }
+

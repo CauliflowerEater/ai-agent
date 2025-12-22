@@ -1,4 +1,4 @@
-package com.shawn.aiagent.advisor;
+package com.shawn.aiagent.support.advisor;
 
 import org.jetbrains.annotations.NotNull;
 import org.springframework.ai.chat.client.ChatClientRequest;
@@ -14,7 +14,7 @@ import java.util.Map;
 
 /**
  * 自定义 Re2 Advisor
- * 让模型“重新读一遍问题”，以期提高推理质量
+ * 让模型"重新读一遍问题"，以期提高推理质量
  */
 public class ReReadingAdvisor implements CallAdvisor, StreamAdvisor {
 
@@ -75,3 +75,4 @@ public class ReReadingAdvisor implements CallAdvisor, StreamAdvisor {
         return this.getClass().getSimpleName();
     }
 }
+
