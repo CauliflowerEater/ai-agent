@@ -54,6 +54,40 @@ Every public method MUST include a contract comment in the following format:
  * Idempotency:
  */
 
+### 3.3 Consistency, Idempotency & Repair Rules
+
+When designing or generating any method, the following decision rules MUST be applied.
+
+#### Consistency
+- If a method has side effects (DB writes, MQ publish, HTTP calls, file IO, external SDK calls),
+  and these effects are NOT fully completed within a single atomic and rollbackable boundary,
+  the method MUST be treated as eventually consistent.
+- Do NOT assume "method returns success = work is fully completed".
+- If intermediate states are possible, they MUST be explicit (e.g. INITING / READY / FAILED).
+
+#### Replay & Idempotency
+- If a method may be retried, resumed, concurrently invoked, or executed again under unknown prior outcome,
+  it MUST be replay-safe.
+- Replay safety MUST be achieved by one of:
+  - Idempotency keys with well-defined scope and uniqueness
+  - Step-level deduplication / resumable workflow design
+  - Database uniqueness constraints that collapse duplicates into a single outcome
+- Do NOT rely on "this is an internal method" as a reason to skip idempotency.
+  Internal methods are treated as replayable if they can be re-entered after failure.
+
+#### Failure & Repair
+- If a method is eventually consistent, it MUST define failure handling semantics:
+  - Whether automatic repair is supported
+  - Retry or resume strategy (if any)
+  - Terminal failure state (e.g. FAILED) to avoid infinite intermediate states
+- If partial effects cannot be safely repeated, a compensation or explicit manual recovery path MUST be defined.
+- Infinite INITING or hanging states are forbidden; time bounds or termination rules MUST be specified.
+
+#### Design Preference
+- Prefer step-based, resumable workflows over one-shot implementations.
+- Prefer explicit state transitions over implicit success assumptions.
+- Avoid introducing compensation or idempotency unless replay is possible or expected.
+
 ---
 
 ## 4. Naming Rules (Strict)
