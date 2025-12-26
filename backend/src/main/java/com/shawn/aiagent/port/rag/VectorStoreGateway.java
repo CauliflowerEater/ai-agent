@@ -29,5 +29,15 @@ public interface VectorStoreGateway {
      * Idempotency: 幂等（删除不存在的文档不会报错）
      */
     void deleteDocuments(List<String> documentIds);
+
+    /**
+     * Intent: 使用向量进行相似度检索
+     * Input: query (原始查询文本), embedding (向量), topK (返回前K个结果)
+     * Output: List<RetrievalResult> (已按相似度降序排列)
+     * SideEffects: 调用向量数据库查询
+     * Failure: 网络/超时/Schema错误时抛出RuntimeException（上层映射到 ErrorCode）
+     * Idempotency: 幂等（相同输入下结果受底层索引/近似检索影响，不承诺完全一致）
+     */
+    List<com.shawn.aiagent.domain.rag.RetrievalResult> similaritySearch(String query, List<Double> embedding, int topK);
 }
 

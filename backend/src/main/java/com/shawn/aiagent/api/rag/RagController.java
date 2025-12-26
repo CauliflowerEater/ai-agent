@@ -1,7 +1,10 @@
 package com.shawn.aiagent.api.rag;
 
+import com.shawn.aiagent.api.error.ErrorCode;
+import com.shawn.aiagent.api.exception.BusinessException;
 import com.shawn.aiagent.app.rag.PreviewReindexUseCase;
 import com.shawn.aiagent.app.rag.ReindexDocumentsUseCase;
+import com.shawn.aiagent.app.rag.RetrieveTop1ChunkByQueryUseCase;
 import com.shawn.aiagent.domain.rag.ReindexPreview;
 import com.shawn.aiagent.domain.rag.ReindexResult;
 import com.shawn.aiagent.support.response.ApiResponse;
@@ -30,6 +33,9 @@ public class RagController {
     @Resource
     private PreviewReindexUseCase previewReindexUseCase;
 
+    @Resource
+    private RetrieveTop1ChunkByQueryUseCase retrieveTop1ChunkByQueryUseCase;
+
     /**
      * Intent: 执行重新索引或预览操作
      * Input: dryRun (是否预览，默认为true)
@@ -48,6 +54,31 @@ public class RagController {
         } else {
             return executeReindex();
         }
+    }
+
+    /**
+     * Intent: 根据 query 检索最相似的 chunk
+     * Input: query (必填), requestId (可选)
+     * Output: Mono<ApiResponse<RetrievalResult>> (top-1 检索结果)
+     * SideEffects: 调用 embedding 与向量检索
+     * Failure: 输入不合法/超时/网络错误返回对应错误码
+     * Idempotency: 非幂等
+     */
+    @GetMapping("/retrieve")
+    public Mono<ApiResponse<?>> retrieve(
+            @RequestParam("query") String query,
+            @RequestParam(value = "requestId", required = false) String requestId) {
+        log.info("收到检索请求，requestId={}", requestId);
+        return retrieveTop1ChunkByQueryUseCase.execute(query, requestId)
+                .<ApiResponse<?>>map(ApiResponseBuilder::success)
+                .onErrorResume(e -> {
+                    if (e instanceof BusinessException be) {
+                        log.error("检索失败: code={}, msg={}", be.getCode(), be.getMessage(), be);
+                        return Mono.just(ApiResponseBuilder.error(be.getCode(), be.getMessage()));
+                    }
+                    log.error("检索失败: {}", e.getMessage(), e);
+                    return Mono.just(ApiResponseBuilder.error(ErrorCode.SYSTEM_ERROR, "检索失败: " + e.getMessage()));
+                });
     }
 
     /**

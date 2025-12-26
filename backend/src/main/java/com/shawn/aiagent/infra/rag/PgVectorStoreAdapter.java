@@ -1,14 +1,17 @@
 package com.shawn.aiagent.infra.rag;
 
 import com.shawn.aiagent.domain.rag.DocumentChunk;
+import com.shawn.aiagent.domain.rag.RetrievalResult;
 import com.shawn.aiagent.port.rag.VectorStoreGateway;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -64,6 +67,43 @@ public class PgVectorStoreAdapter implements VectorStoreGateway {
             throw new RuntimeException("删除文档失败: " + e.getMessage(), e);
         }
     }
+
+    @Override
+    public List<RetrievalResult> similaritySearch(String query, List<Double> embedding, int topK) {
+        if (query == null) {
+            throw new IllegalArgumentException("query cannot be null");
+        }
+        String normalizedQuery = query.trim();
+        if (normalizedQuery.isEmpty()) {
+            throw new IllegalArgumentException("query cannot be empty");
+        }
+        int k = topK > 0 ? topK : 1;
+
+        log.info("开始向量检索，topK={}, query.length={}", k, normalizedQuery.length());
+
+        try {
+            SearchRequest searchRequest = SearchRequest.builder()
+                    .query(normalizedQuery)
+                    .topK(k)
+                    .build();
+
+            List<Document> docs = vectorStore.similaritySearch(searchRequest);
+            if (docs == null || docs.isEmpty()) {
+                log.warn("向量检索结果为空，query.length={}", normalizedQuery.length());
+                return List.of();
+            }
+
+            return docs.stream()
+                    .map(this::toRetrievalResult)
+                    .toList();
+        } catch (RuntimeException e) {
+            log.error("向量检索失败: {}", e.getMessage(), e);
+            throw e;
+        } catch (Exception e) {
+            log.error("向量检索失败: {}", e.getMessage(), e);
+            throw new RuntimeException("向量检索失败: " + e.getMessage(), e);
+        }
+    }
     
     /**
      * 将领域对象DocumentChunk转换为Spring AI的Document
@@ -74,6 +114,14 @@ public class PgVectorStoreAdapter implements VectorStoreGateway {
                 chunk.getContent(),
                 chunk.getMetadata()
         );
+    }
+
+    private RetrievalResult toRetrievalResult(Document document) {
+        String id = document.getId();
+        String text = document.getText();
+        Map<String, Object> metadata = document.getMetadata();
+        double score = document.getScore() != null ? document.getScore() : 0d;
+        return new RetrievalResult(id, text != null ? text : "", score, metadata);
     }
 }
 
