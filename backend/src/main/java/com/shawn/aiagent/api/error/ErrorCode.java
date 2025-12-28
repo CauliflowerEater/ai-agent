@@ -26,7 +26,8 @@ public enum ErrorCode {
     EMBEDDING_TIMEOUT(50004, "向量化超时"),
     VECTOR_SEARCH_TIMEOUT(50005, "向量检索超时"),
     EMBEDDING_API_ERROR(50006, "向量化API错误"),
-    VECTOR_STORE_ERROR(50007, "向量数据库错误");
+    VECTOR_STORE_ERROR(50007, "向量数据库错误"),
+    TOTAL_TIMEOUT(50008, "检索总超时");
 
     /**
      * 状态码

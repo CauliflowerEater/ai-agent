@@ -37,45 +37,54 @@ public class RetrieveTop1ChunkByQueryUseCaseImpl implements RetrieveTop1ChunkByQ
 
     @Override
     public Mono<RetrievalResult> execute(String query, String requestId) {
-        final String reqId = requestId != null ? requestId : "";
-        final String normalized = normalizeQuery(query);
+        return Mono.defer(() -> {
+            final String reqId = requestId != null ? requestId : "";
+            final String normalized = normalizeQuery(query);
 
-        log.info("收到检索请求，requestId={}, query.length={}", reqId, normalized.length());
+            log.info("收到检索请求，requestId={}, query.length={}", reqId, normalized.length());
 
-        Mono<List<Double>> embeddingMono = Mono.fromCallable(() -> embeddingGateway.embed(normalized))
-                .subscribeOn(Schedulers.boundedElastic())
-                .map(this::validateDimensions)
-                .timeout(Duration.ofSeconds(retrievalConfig.getTimeoutEmbeddingSeconds()))
-                .onErrorMap(TimeoutException.class,
-                        e -> new BusinessException(ErrorCode.EMBEDDING_TIMEOUT, "向量化超时"))
-                .onErrorMap(IllegalArgumentException.class,
-                        e -> new BusinessException(ErrorCode.INVALID_QUERY, e.getMessage()))
-                .onErrorMap(e -> new BusinessException(ErrorCode.EMBEDDING_API_ERROR, "向量化失败: " + e.getMessage()));
+            Mono<List<Double>> embeddingMono = Mono.fromCallable(() -> embeddingGateway.embed(normalized))
+                    .subscribeOn(Schedulers.boundedElastic())
+                    .map(this::validateDimensions)
+                    .timeout(Duration.ofSeconds(retrievalConfig.getTimeoutEmbeddingSeconds()))
+                    .onErrorMap(TimeoutException.class,
+                            e -> new BusinessException(ErrorCode.EMBEDDING_TIMEOUT, "向量化超时"))
+                    .onErrorMap(IllegalArgumentException.class,
+                            e -> new BusinessException(ErrorCode.INVALID_QUERY, e.getMessage()))
+                    .onErrorMap(e -> e instanceof BusinessException
+                            ? e
+                            : new BusinessException(ErrorCode.EMBEDDING_API_ERROR, "向量化失败: " + e.getMessage()));
 
-        Mono<RetrievalResult> resultMono = embeddingMono.flatMap(embedding ->
-                Mono.fromCallable(() -> vectorStoreGateway.similaritySearch(normalized, embedding, 1))
-                        .subscribeOn(Schedulers.boundedElastic())
-                        .timeout(Duration.ofSeconds(retrievalConfig.getTimeoutVectorSearchSeconds()))
-                        .onErrorMap(TimeoutException.class,
-                                e -> new BusinessException(ErrorCode.VECTOR_SEARCH_TIMEOUT, "向量检索超时"))
-                        .onErrorMap(IllegalArgumentException.class,
-                                e -> new BusinessException(ErrorCode.INVALID_QUERY, e.getMessage()))
-                        .onErrorMap(e -> new BusinessException(ErrorCode.VECTOR_STORE_ERROR, "向量检索失败: " + e.getMessage()))
-                        .map(results -> {
-                            if (results == null || results.isEmpty()) {
-                                throw new BusinessException(ErrorCode.RETRIEVAL_NOT_FOUND, "未找到匹配的文档块");
-                            }
-                            return results.get(0);
-                        })
-        );
+            Mono<RetrievalResult> resultMono = embeddingMono.flatMap(embedding ->
+                    Mono.fromCallable(() -> vectorStoreGateway.similaritySearch(normalized, embedding, 1))
+                            .subscribeOn(Schedulers.boundedElastic())
+                            .timeout(Duration.ofSeconds(retrievalConfig.getTimeoutVectorSearchSeconds()))
+                            .onErrorMap(TimeoutException.class,
+                                    e -> new BusinessException(ErrorCode.VECTOR_SEARCH_TIMEOUT, "向量检索超时"))
+                            .onErrorMap(IllegalArgumentException.class,
+                                    e -> new BusinessException(ErrorCode.INVALID_QUERY, e.getMessage()))
+                            .onErrorMap(e -> e instanceof BusinessException
+                                    ? e
+                                    : new BusinessException(ErrorCode.VECTOR_STORE_ERROR, "向量检索失败: " + e.getMessage()))
+                            .map(results -> {
+                                if (results == null || results.isEmpty()) {
+                                    throw new BusinessException(ErrorCode.RETRIEVAL_NOT_FOUND, "未找到匹配的文档块");
+                                }
+                                return results.get(0);
+                            })
+            );
 
-        return resultMono
-                .timeout(Duration.ofSeconds(retrievalConfig.getTimeoutTotalSeconds()))
-                .onErrorMap(TimeoutException.class,
-                        e -> new BusinessException(ErrorCode.VECTOR_SEARCH_TIMEOUT, "检索超时"))
-                .doOnSuccess(r -> log.info("检索完成，requestId={}, chunkId={}, score={}",
-                        reqId, r.getChunkId(), r.getScore()))
-                .doOnError(e -> log.error("检索失败，requestId={}, error={}", reqId, e.getMessage()));
+            return resultMono
+                    .timeout(Duration.ofSeconds(retrievalConfig.getTimeoutTotalSeconds()))
+                    .onErrorMap(TimeoutException.class,
+                            e -> new BusinessException(ErrorCode.TOTAL_TIMEOUT, "检索总超时"))
+                    .onErrorMap(e -> e instanceof BusinessException
+                            ? e
+                            : new BusinessException(ErrorCode.SYSTEM_ERROR, "检索失败: " + e.getMessage()))
+                    .doOnSuccess(r -> log.info("检索完成，requestId={}, chunkId={}, score={}",
+                            reqId, r.getChunkId(), r.getScore()))
+                    .doOnError(e -> log.error("检索失败，requestId={}, error={}", reqId, e.getMessage()));
+        });
     }
 
     private String normalizeQuery(String query) {
@@ -104,5 +113,3 @@ public class RetrieveTop1ChunkByQueryUseCaseImpl implements RetrieveTop1ChunkByQ
         return embedding;
     }
 }
-
-
