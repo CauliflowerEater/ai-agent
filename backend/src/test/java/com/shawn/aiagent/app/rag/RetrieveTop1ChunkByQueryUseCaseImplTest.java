@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.Exceptions;
 import reactor.test.StepVerifier;
 
 import java.util.List;
@@ -20,6 +21,8 @@ import java.util.concurrent.TimeoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -111,8 +114,8 @@ class RetrieveTop1ChunkByQueryUseCaseImplTest {
     void givenEmbeddingTimeoutWhenExecuteThenEmbeddingTimeout() {
         RetrieveTop1ChunkByQueryUseCaseImpl useCase = newUseCase(50, 1, 5, 5);
 
-        when(embeddingGateway.getDimensions()).thenReturn(sampleEmbedding().size());
-        when(embeddingGateway.embed(eq("q"))).thenThrow(new TimeoutException("embedding timeout"));
+        when(embeddingGateway.embed(eq("q")))
+                .thenThrow(Exceptions.propagate(new TimeoutException("embedding timeout")));
 
         StepVerifier.create(useCase.execute("q", "req-embed-timeout"))
                 .expectErrorSatisfies(e -> assertBusinessException(e, ErrorCode.EMBEDDING_TIMEOUT))
@@ -129,7 +132,7 @@ class RetrieveTop1ChunkByQueryUseCaseImplTest {
         when(embeddingGateway.getDimensions()).thenReturn(embedding.size());
         when(embeddingGateway.embed(eq("query"))).thenReturn(embedding);
         when(vectorStoreGateway.similaritySearch(eq("query"), eq(embedding), eq(1)))
-                .thenThrow(new TimeoutException("vector search timeout"));
+                .thenThrow(Exceptions.propagate(new TimeoutException("vector search timeout")));
 
         StepVerifier.create(useCase.execute("query", "req-vector-timeout"))
                 .expectErrorSatisfies(e -> assertBusinessException(e, ErrorCode.VECTOR_SEARCH_TIMEOUT))
@@ -193,7 +196,6 @@ class RetrieveTop1ChunkByQueryUseCaseImplTest {
     @Test
     void givenFailureWhenExecuteThenNoImplicitRetry() {
         RetrieveTop1ChunkByQueryUseCaseImpl useCase = newUseCase(50, 5, 5, 5);
-        when(embeddingGateway.getDimensions()).thenReturn(sampleEmbedding().size());
         when(embeddingGateway.embed(eq("query"))).thenThrow(new RuntimeException("downstream failure"));
 
         StepVerifier.create(useCase.execute("query", "req-no-retry"))
@@ -201,6 +203,6 @@ class RetrieveTop1ChunkByQueryUseCaseImplTest {
                 .verify();
 
         verify(embeddingGateway).embed("query");
-        verify(vectorStoreGateway, never()).similaritySearch(eq("query"), eq(sampleEmbedding()), eq(1));
+        verify(vectorStoreGateway, never()).similaritySearch(any(), any(), anyInt());
     }
-}
+} 

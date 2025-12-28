@@ -8,6 +8,7 @@ import com.shawn.aiagent.port.rag.VectorStoreGateway;
 import com.shawn.aiagent.support.config.RetrievalConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -47,25 +48,35 @@ public class RetrieveTop1ChunkByQueryUseCaseImpl implements RetrieveTop1ChunkByQ
                     .subscribeOn(Schedulers.boundedElastic())
                     .map(this::validateDimensions)
                     .timeout(Duration.ofSeconds(retrievalConfig.getTimeoutEmbeddingSeconds()))
-                    .onErrorMap(TimeoutException.class,
-                            e -> new BusinessException(ErrorCode.EMBEDDING_TIMEOUT, "向量化超时"))
-                    .onErrorMap(IllegalArgumentException.class,
-                            e -> new BusinessException(ErrorCode.INVALID_QUERY, e.getMessage()))
-                    .onErrorMap(e -> e instanceof BusinessException
-                            ? e
-                            : new BusinessException(ErrorCode.EMBEDDING_API_ERROR, "向量化失败: " + e.getMessage()));
+                    .onErrorMap(e -> {
+                        if (e instanceof BusinessException) {
+                            return e;
+                        }
+                        if (hasCause(e, TimeoutException.class)) {
+                            return new BusinessException(ErrorCode.EMBEDDING_TIMEOUT, "向量化超时");
+                        }
+                        if (hasCause(e, IllegalArgumentException.class)) {
+                            return new BusinessException(ErrorCode.INVALID_QUERY, bestMessage(e));
+                        }
+                        return new BusinessException(ErrorCode.EMBEDDING_API_ERROR, "向量化失败: " + bestMessage(e));
+                    });
 
             Mono<RetrievalResult> resultMono = embeddingMono.flatMap(embedding ->
                     Mono.fromCallable(() -> vectorStoreGateway.similaritySearch(normalized, embedding, 1))
                             .subscribeOn(Schedulers.boundedElastic())
                             .timeout(Duration.ofSeconds(retrievalConfig.getTimeoutVectorSearchSeconds()))
-                            .onErrorMap(TimeoutException.class,
-                                    e -> new BusinessException(ErrorCode.VECTOR_SEARCH_TIMEOUT, "向量检索超时"))
-                            .onErrorMap(IllegalArgumentException.class,
-                                    e -> new BusinessException(ErrorCode.INVALID_QUERY, e.getMessage()))
-                            .onErrorMap(e -> e instanceof BusinessException
-                                    ? e
-                                    : new BusinessException(ErrorCode.VECTOR_STORE_ERROR, "向量检索失败: " + e.getMessage()))
+                            .onErrorMap(e -> {
+                                if (e instanceof BusinessException) {
+                                    return e;
+                                }
+                                if (hasCause(e, TimeoutException.class)) {
+                                    return new BusinessException(ErrorCode.VECTOR_SEARCH_TIMEOUT, "向量检索超时");
+                                }
+                                if (hasCause(e, IllegalArgumentException.class)) {
+                                    return new BusinessException(ErrorCode.INVALID_QUERY, bestMessage(e));
+                                }
+                                return new BusinessException(ErrorCode.VECTOR_STORE_ERROR, "向量检索失败: " + bestMessage(e));
+                            })
                             .map(results -> {
                                 if (results == null || results.isEmpty()) {
                                     throw new BusinessException(ErrorCode.RETRIEVAL_NOT_FOUND, "未找到匹配的文档块");
@@ -76,11 +87,15 @@ public class RetrieveTop1ChunkByQueryUseCaseImpl implements RetrieveTop1ChunkByQ
 
             return resultMono
                     .timeout(Duration.ofSeconds(retrievalConfig.getTimeoutTotalSeconds()))
-                    .onErrorMap(TimeoutException.class,
-                            e -> new BusinessException(ErrorCode.TOTAL_TIMEOUT, "检索总超时"))
-                    .onErrorMap(e -> e instanceof BusinessException
-                            ? e
-                            : new BusinessException(ErrorCode.SYSTEM_ERROR, "检索失败: " + e.getMessage()))
+                    .onErrorMap(e -> {
+                        if (e instanceof BusinessException) {
+                            return e;
+                        }
+                        if (hasCause(e, TimeoutException.class)) {
+                            return new BusinessException(ErrorCode.TOTAL_TIMEOUT, "检索总超时");
+                        }
+                        return new BusinessException(ErrorCode.SYSTEM_ERROR, "检索失败: " + bestMessage(e));
+                    })
                     .doOnSuccess(r -> log.info("检索完成，requestId={}, chunkId={}, score={}",
                             reqId, r.getChunkId(), r.getScore()))
                     .doOnError(e -> log.error("检索失败，requestId={}, error={}", reqId, e.getMessage()));
@@ -111,5 +126,28 @@ public class RetrieveTop1ChunkByQueryUseCaseImpl implements RetrieveTop1ChunkByQ
                     "embedding 维度不匹配，期望 " + expected + " 实际 " + embedding.size());
         }
         return embedding;
+    }
+
+    private static boolean hasCause(Throwable e, Class<?> type) {
+        Throwable t = Exceptions.unwrap(e);
+        while (t != null) {
+            if (type.isInstance(t)) {
+                return true;
+            }
+            t = t.getCause();
+        }
+        return false;
+    }
+
+    private static String bestMessage(Throwable e) {
+        Throwable t = Exceptions.unwrap(e);
+        while (t != null) {
+            String msg = t.getMessage();
+            if (msg != null && !msg.isBlank()) {
+                return msg;
+            }
+            t = t.getCause();
+        }
+        return String.valueOf(e);
     }
 }
