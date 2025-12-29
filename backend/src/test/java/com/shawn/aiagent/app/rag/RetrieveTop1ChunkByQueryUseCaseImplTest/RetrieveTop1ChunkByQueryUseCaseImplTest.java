@@ -1,7 +1,8 @@
-package com.shawn.aiagent.app.rag;
+package com.shawn.aiagent.app.rag.RetrieveTop1ChunkByQueryUseCaseImplTest;
 
 import com.shawn.aiagent.api.error.ErrorCode;
 import com.shawn.aiagent.api.exception.BusinessException;
+import com.shawn.aiagent.app.rag.RetrieveTop1ChunkByQueryUseCaseImpl;
 import com.shawn.aiagent.domain.rag.RetrievalResult;
 import com.shawn.aiagent.port.rag.EmbeddingGateway;
 import com.shawn.aiagent.port.rag.VectorStoreGateway;
