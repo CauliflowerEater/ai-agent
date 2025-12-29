@@ -1,4 +1,4 @@
-package com.shawn.aiagent.support.config;
+package com.shawn.aiagent.infra.rag.config;
 
 import io.netty.channel.ChannelOption;
 import org.springframework.beans.factory.annotation.Value;

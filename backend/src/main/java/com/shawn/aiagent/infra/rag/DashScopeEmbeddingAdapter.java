@@ -1,12 +1,11 @@
 package com.shawn.aiagent.infra.rag;
 
-import com.shawn.aiagent.port.rag.EmbeddingGateway;
+import com.shawn.aiagent.port.rag.ReindexEmbeddingGateway;
+import com.shawn.aiagent.port.rag.SlaEmbeddingGateway;
 import com.shawn.aiagent.support.config.RetrievalConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.embedding.EmbeddingModel;
-import org.springframework.stereotype.Component;
 
-import jakarta.annotation.Resource;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -17,26 +16,23 @@ import java.util.List;
  * DashScope向量化适配器
  * 实现EmbeddingGateway接口，使用Spring AI DashScope Embedding Model
  */
-@Component
 @Slf4j
-public class DashScopeEmbeddingAdapter implements EmbeddingGateway {
-    
-    @Resource(name = "slaEmbeddingModel")
-    private EmbeddingModel embeddingModel;
+public class DashScopeEmbeddingAdapter implements SlaEmbeddingGateway, ReindexEmbeddingGateway {
 
-    @Resource
-    private RetrievalConfig retrievalConfig;
+    private final EmbeddingModel embeddingModel;
+    private final RetrievalConfig retrievalConfig;
+
+    public DashScopeEmbeddingAdapter(EmbeddingModel embeddingModel, RetrievalConfig retrievalConfig) {
+        if (embeddingModel == null) {
+            throw new IllegalArgumentException("embeddingModel cannot be null");
+        }
+        this.embeddingModel = embeddingModel;
+        this.retrievalConfig = retrievalConfig;
+    }
     
     @Override
     public int getDimensions() {
-        try {
-            int dimensions = embeddingModel.dimensions();
-            log.debug("获取向量维度: {}", dimensions);
-            return dimensions;
-        } catch (Exception e) {
-            log.error("获取向量维度失败: {}", e.getMessage(), e);
-            throw new RuntimeException("获取向量维度失败: " + e.getMessage(), e);
-        }
+        return embeddingModel.dimensions();
     }
 
     @Override
@@ -63,12 +59,8 @@ public class DashScopeEmbeddingAdapter implements EmbeddingGateway {
             }
             return result;
         } catch (RuntimeException e) {
-            // 直接抛出运行时异常，交由上层映射 ErrorCode
-            log.error("向量化失败: {}", e.getMessage(), e);
+            log.error("向量化失败: type={}, msg={}", e.getClass().getName(), e.getMessage(), e);
             throw e;
-        } catch (Exception e) {
-            log.error("向量化失败: {}", e.getMessage(), e);
-            throw new RuntimeException("向量化失败: " + e.getMessage(), e);
         }
     }
 
@@ -77,6 +69,7 @@ public class DashScopeEmbeddingAdapter implements EmbeddingGateway {
             int configuredLen = retrievalConfig != null ? retrievalConfig.getLogQueryPreviewLength() : 128;
             int previewLen = Math.min(configuredLen, text.length());
             String preview = text.substring(0, previewLen);
+            preview = preview.replace("\n", " ").replace("\r", " ");
             String hash = sha256Base64(text);
             log.info("Embedding request: len={}, preview=\"{}\", hash={}", text.length(), preview, hash);
         } catch (Exception e) {
@@ -90,4 +83,3 @@ public class DashScopeEmbeddingAdapter implements EmbeddingGateway {
         return Base64.getEncoder().encodeToString(hashed);
     }
 }
-

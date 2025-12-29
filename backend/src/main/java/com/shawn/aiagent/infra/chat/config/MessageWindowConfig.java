@@ -1,4 +1,4 @@
-package com.shawn.aiagent.support.config;
+package com.shawn.aiagent.infra.chat.config;
 
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;

@@ -1,4 +1,4 @@
-package com.shawn.aiagent.support.config;
+package com.shawn.aiagent.infra.rag.config;
 
 import com.alibaba.cloud.ai.autoconfigure.dashscope.DashScopeEmbeddingProperties;
 import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;

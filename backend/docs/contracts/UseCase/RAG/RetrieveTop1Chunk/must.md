@@ -17,7 +17,6 @@ retrieveTop1ChunkByQuery – Must Contract v1.0
 
 ## UNKNOWN（明确不保证）
 - 当调用因超时或网络中断失败时，embedding 请求是否已在下游实际执行、以及是否产生计费，无法保证。
-- 超时返回后，底层 HTTP 请求是否被立即中止，取决于 client/SDK 的超时与取消能力。
 
 ## Gaps（需要补可观测性或测试支撑）
 - 日志中禁止记录完整 query（建议仅记录长度、前 N 字符或哈希）；需通过日志采集校验。
