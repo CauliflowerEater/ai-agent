@@ -5,9 +5,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.web.client.RestClient;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 
@@ -58,8 +59,25 @@ public class WebClientConfig {
      * 提供 RestClient.Builder，供 DashScopeApi 等使用。
      */
     @Bean
-    public RestClient.Builder restClientBuilder() {
-        return RestClient.builder();
+    @Primary
+    public RestClient.Builder restClientBuilder(
+            @Value("${app.webclient.default.connect-timeout-ms:5000}") int connectTimeoutMs,
+            @Value("${app.webclient.default.response-timeout-ms:10000}") String responseTimeoutMs) {
+        return buildRestClient(connectTimeoutMs, responseTimeoutMs);
+    }
+
+    @Bean(name = "slaRestClientBuilder")
+    public RestClient.Builder slaRestClientBuilder(
+            @Value("${app.webclient.sla.connect-timeout-ms:3000}") int connectTimeoutMs,
+            @Value("${app.webclient.sla.response-timeout-ms:5000}") String responseTimeoutMs) {
+        return buildRestClient(connectTimeoutMs, responseTimeoutMs);
+    }
+
+    @Bean(name = "reindexRestClientBuilder")
+    public RestClient.Builder reindexRestClientBuilder(
+            @Value("${app.webclient.reindex.connect-timeout-ms:8000}") int connectTimeoutMs,
+            @Value("${app.webclient.reindex.response-timeout-ms:30000}") String responseTimeoutMs) {
+        return buildRestClient(connectTimeoutMs, responseTimeoutMs);
     }
 
     private HttpClient buildHttpClient(int connectTimeoutMs, Duration responseTimeout) {
@@ -69,6 +87,14 @@ public class WebClientConfig {
     }
 
     private static final Pattern DIGITS = Pattern.compile("^\\d+$");
+
+    private RestClient.Builder buildRestClient(int connectTimeoutMs, String responseTimeoutMs) {
+        Duration rt = parseDurationMs(responseTimeoutMs);
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(connectTimeoutMs);
+        factory.setReadTimeout((int) rt.toMillis());
+        return RestClient.builder().requestFactory(factory);
+    }
 
     private Duration parseDurationMs(String raw) {
         if (DIGITS.matcher(raw).matches()) {

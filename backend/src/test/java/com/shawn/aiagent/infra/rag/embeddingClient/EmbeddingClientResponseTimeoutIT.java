@@ -7,17 +7,18 @@ import com.shawn.aiagent.port.rag.SlaEmbeddingGateway;
 import com.shawn.aiagent.support.config.RetrievalConfig;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.SocketPolicy;
 import io.netty.handler.timeout.ReadTimeoutException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -61,15 +62,14 @@ class EmbeddingClientResponseTimeoutIT {
     }
 
     @Autowired
+    @Qualifier("slaEmbeddingGateway")
     private SlaEmbeddingGateway embeddingGateway;
 
     @Test
     void givenSlowServerWhenEmbedThenClientTimesOutLocally() {
         server.enqueue(new MockResponse()
-                .setBodyDelay(600, TimeUnit.MILLISECONDS)
-                .setResponseCode(200)
-                .addHeader("Content-Type", "application/json")
-                .setBody(sampleEmbeddingResponse()));
+                // 不返回任何响应体，强制触发客户端超时
+                .setSocketPolicy(SocketPolicy.NO_RESPONSE));
 
         long start = System.currentTimeMillis();
 
@@ -85,29 +85,26 @@ class EmbeddingClientResponseTimeoutIT {
     private void assertTimeoutSemantic(Throwable throwable) {
         Throwable cursor = throwable;
         while (cursor != null) {
-            if (cursor instanceof ReadTimeoutException || cursor instanceof java.util.concurrent.TimeoutException) {
+            if (cursor instanceof ReadTimeoutException
+                    || cursor instanceof java.util.concurrent.TimeoutException
+                    || cursor instanceof java.net.SocketTimeoutException) {
                 return;
             }
             cursor = cursor.getCause();
         }
+        String msg = throwable.getMessage();
+        if (isTimeoutMessage(msg)) {
+            return;
+        }
         throw new AssertionError("Expected a timeout-related cause but got: " + throwable);
     }
 
-    private String sampleEmbeddingResponse() {
-        return """
-                {
-                  "request_id": "req-1",
-                  "output": {
-                    "embeddings": [
-                      {
-                        "embedding": [0.1, 0.2, 0.3],
-                        "text_index": 0
-                      }
-                    ]
-                  },
-                  "usage": { "total_tokens": 3 }
-                }
-                """;
+    private boolean isTimeoutMessage(String msg) {
+        if (msg == null) {
+            return false;
+        }
+        String lower = msg.toLowerCase();
+        return lower.contains("timeout") || lower.contains("timed out");
     }
-}
 
+}

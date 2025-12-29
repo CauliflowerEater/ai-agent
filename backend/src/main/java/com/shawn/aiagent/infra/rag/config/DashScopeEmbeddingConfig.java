@@ -30,7 +30,7 @@ public class DashScopeEmbeddingConfig {
     public EmbeddingModel reindexEmbeddingModel(
             DashScopeEmbeddingProperties props,
             @Qualifier("reindexWebClientBuilder") WebClient.Builder reindexWebClientBuilder,
-            RestClient.Builder restClientBuilder) {
+            @Qualifier("reindexRestClientBuilder") RestClient.Builder restClientBuilder) {
 
         DashScopeApi api = buildDashScopeApi(props, restClientBuilder, reindexWebClientBuilder);
         return new DashScopeEmbeddingModel(api, resolveMetadataMode(props), resolveOptions(props));
@@ -40,7 +40,7 @@ public class DashScopeEmbeddingConfig {
     public EmbeddingModel slaEmbeddingModel(
             DashScopeEmbeddingProperties props,
             @Qualifier("slaWebClientBuilder") WebClient.Builder slaWebClientBuilder,
-            RestClient.Builder restClientBuilder) {
+            @Qualifier("slaRestClientBuilder") RestClient.Builder restClientBuilder) {
 
         DashScopeApi api = buildDashScopeApi(props, restClientBuilder, slaWebClientBuilder);
         return new DashScopeEmbeddingModel(api, resolveMetadataMode(props), resolveOptions(props));
