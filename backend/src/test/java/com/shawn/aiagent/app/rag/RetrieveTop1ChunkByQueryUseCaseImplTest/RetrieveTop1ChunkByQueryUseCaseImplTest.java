@@ -7,6 +7,7 @@ import com.shawn.aiagent.domain.rag.RetrievalResult;
 import com.shawn.aiagent.port.rag.EmbeddingGateway;
 import com.shawn.aiagent.port.rag.VectorStoreGateway;
 import com.shawn.aiagent.support.config.RetrievalConfig;
+import com.shawn.aiagent.support.timeoutSemanticClassifier.TimeoutSemanticClassifier;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -39,13 +40,16 @@ class RetrieveTop1ChunkByQueryUseCaseImplTest {
     @Mock
     private VectorStoreGateway vectorStoreGateway;
 
+    @Mock
+    private TimeoutSemanticClassifier timeoutSemanticClassifier;
+
     private RetrieveTop1ChunkByQueryUseCaseImpl newUseCase(int maxLen, int embeddingTimeoutSec, int vectorTimeoutSec, int totalTimeoutSec) {
         RetrievalConfig config = new RetrievalConfig();
         config.setMaxQueryLength(maxLen);
         config.setTimeoutEmbeddingSeconds(embeddingTimeoutSec);
         config.setTimeoutVectorSearchSeconds(vectorTimeoutSec);
         config.setTimeoutTotalSeconds(totalTimeoutSec);
-        return new RetrieveTop1ChunkByQueryUseCaseImpl(embeddingGateway, vectorStoreGateway, config);
+        return new RetrieveTop1ChunkByQueryUseCaseImpl(embeddingGateway, vectorStoreGateway, config, timeoutSemanticClassifier);
     }
 
     private List<Double> sampleEmbedding() {

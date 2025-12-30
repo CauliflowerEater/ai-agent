@@ -6,14 +6,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestClient;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 
 import java.time.Duration;
-import java.util.regex.Pattern;
+import com.shawn.aiagent.support.time.DurationParser;
 
 /**
  * 全局 WebClient.Builder 配置，覆盖默认自动配置，提供超时等基础设置。
@@ -55,53 +53,14 @@ public class WebClientConfig {
                 .clientConnector(new ReactorClientHttpConnector(buildHttpClient(connectTimeoutMs, parseDurationMs(responseTimeoutMs))));
     }
 
-    /**
-     * 提供 RestClient.Builder，供 DashScopeApi 等使用。
-     */
-    @Bean
-    @Primary
-    public RestClient.Builder restClientBuilder(
-            @Value("${app.webclient.default.connect-timeout-ms:5000}") int connectTimeoutMs,
-            @Value("${app.webclient.default.response-timeout-ms:10000}") String responseTimeoutMs) {
-        return buildRestClient(connectTimeoutMs, responseTimeoutMs);
-    }
-
-    @Bean(name = "slaRestClientBuilder")
-    public RestClient.Builder slaRestClientBuilder(
-            @Value("${app.webclient.sla.connect-timeout-ms:3000}") int connectTimeoutMs,
-            @Value("${app.webclient.sla.response-timeout-ms:5000}") String responseTimeoutMs) {
-        return buildRestClient(connectTimeoutMs, responseTimeoutMs);
-    }
-
-    @Bean(name = "reindexRestClientBuilder")
-    public RestClient.Builder reindexRestClientBuilder(
-            @Value("${app.webclient.reindex.connect-timeout-ms:8000}") int connectTimeoutMs,
-            @Value("${app.webclient.reindex.response-timeout-ms:30000}") String responseTimeoutMs) {
-        return buildRestClient(connectTimeoutMs, responseTimeoutMs);
-    }
-
     private HttpClient buildHttpClient(int connectTimeoutMs, Duration responseTimeout) {
         return HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeoutMs)
                 .responseTimeout(responseTimeout);
     }
 
-    private static final Pattern DIGITS = Pattern.compile("^\\d+$");
-
-    private RestClient.Builder buildRestClient(int connectTimeoutMs, String responseTimeoutMs) {
-        Duration rt = parseDurationMs(responseTimeoutMs);
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(connectTimeoutMs);
-        factory.setReadTimeout((int) rt.toMillis());
-        return RestClient.builder().requestFactory(factory);
-    }
-
     private Duration parseDurationMs(String raw) {
-        if (DIGITS.matcher(raw).matches()) {
-            return Duration.ofMillis(Long.parseLong(raw));
-        }
-        // 兼容已有 ISO-8601 格式
-        return Duration.parse(raw);
+        return DurationParser.parseMsOrIso(raw);
     }
 }
 

@@ -6,6 +6,7 @@ import com.shawn.aiagent.domain.rag.RetrievalResult;
 import com.shawn.aiagent.port.rag.EmbeddingGateway;
 import com.shawn.aiagent.port.rag.VectorStoreGateway;
 import com.shawn.aiagent.support.config.RetrievalConfig;
+import com.shawn.aiagent.support.timeoutSemanticClassifier.TimeoutSemanticClassifier;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.Exceptions;
@@ -14,7 +15,6 @@ import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.TimeoutException;
 
 /**
  * 基于查询语句检索最相似的 chunk
@@ -26,14 +26,17 @@ public class RetrieveTop1ChunkByQueryUseCaseImpl implements RetrieveTop1ChunkByQ
     private final EmbeddingGateway embeddingGateway;
     private final VectorStoreGateway vectorStoreGateway;
     private final RetrievalConfig retrievalConfig;
+    private final TimeoutSemanticClassifier timeoutSemanticClassifier;
 
     public RetrieveTop1ChunkByQueryUseCaseImpl(
             EmbeddingGateway embeddingGateway,
             VectorStoreGateway vectorStoreGateway,
-            RetrievalConfig retrievalConfig) {
+            RetrievalConfig retrievalConfig,
+            TimeoutSemanticClassifier timeoutSemanticClassifier) {
         this.embeddingGateway = embeddingGateway;
         this.vectorStoreGateway = vectorStoreGateway;
         this.retrievalConfig = retrievalConfig;
+        this.timeoutSemanticClassifier = timeoutSemanticClassifier;
     }
 
     @Override
@@ -52,7 +55,7 @@ public class RetrieveTop1ChunkByQueryUseCaseImpl implements RetrieveTop1ChunkByQ
                         if (e instanceof BusinessException) {
                             return e;
                         }
-                        if (hasCause(e, TimeoutException.class)) {
+                        if (timeoutSemanticClassifier.isTimeout(e)) {
                             return new BusinessException(ErrorCode.EMBEDDING_TIMEOUT, "向量化超时");
                         }
                         if (hasCause(e, IllegalArgumentException.class)) {
@@ -69,7 +72,7 @@ public class RetrieveTop1ChunkByQueryUseCaseImpl implements RetrieveTop1ChunkByQ
                                 if (e instanceof BusinessException) {
                                     return e;
                                 }
-                                if (hasCause(e, TimeoutException.class)) {
+                                if (timeoutSemanticClassifier.isTimeout(e)) {
                                     return new BusinessException(ErrorCode.VECTOR_SEARCH_TIMEOUT, "向量检索超时");
                                 }
                                 if (hasCause(e, IllegalArgumentException.class)) {
@@ -91,7 +94,7 @@ public class RetrieveTop1ChunkByQueryUseCaseImpl implements RetrieveTop1ChunkByQ
                         if (e instanceof BusinessException) {
                             return e;
                         }
-                        if (hasCause(e, TimeoutException.class)) {
+                        if (timeoutSemanticClassifier.isTimeout(e)) {
                             return new BusinessException(ErrorCode.TOTAL_TIMEOUT, "检索总超时");
                         }
                         return new BusinessException(ErrorCode.SYSTEM_ERROR, "检索失败: " + bestMessage(e));

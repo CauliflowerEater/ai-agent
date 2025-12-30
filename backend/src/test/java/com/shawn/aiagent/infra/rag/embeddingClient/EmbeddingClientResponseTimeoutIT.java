@@ -3,17 +3,20 @@ package com.shawn.aiagent.infra.rag.embeddingClient;
 import com.shawn.aiagent.infra.rag.config.DashScopeEmbeddingConfig;
 import com.shawn.aiagent.infra.rag.config.EmbeddingGatewayWiringConfig;
 import com.shawn.aiagent.infra.rag.config.WebClientConfig;
+import com.shawn.aiagent.infra.rag.config.RestClientConfig;
 import com.shawn.aiagent.port.rag.SlaEmbeddingGateway;
+import com.shawn.aiagent.port.rag.ReindexEmbeddingGateway;
+import com.shawn.aiagent.port.rag.EmbeddingGateway;
 import com.shawn.aiagent.support.config.RetrievalConfig;
+import com.shawn.aiagent.support.timeoutSemanticClassifier.TimeoutSemanticClassifier;
+import com.shawn.aiagent.support.timeoutSemanticClassifier.TimeoutSemanticClassifierImpl;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.SocketPolicy;
-import io.netty.handler.timeout.ReadTimeoutException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -28,15 +31,19 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  */
 @SpringBootTest(classes = {
         WebClientConfig.class,
+        RestClientConfig.class,
         DashScopeEmbeddingConfig.class,
         EmbeddingGatewayWiringConfig.class,
-        RetrievalConfig.class
+        RetrievalConfig.class,
+        TimeoutSemanticClassifierImpl.class
 })
 class EmbeddingClientResponseTimeoutIT {
 
     private static final MockWebServer server = new MockWebServer();
     private static final int SLA_CONNECT_TIMEOUT_MS = 200;
     private static final long SLA_RESPONSE_TIMEOUT_MS = 200L;
+    private static final int REINDEX_CONNECT_TIMEOUT_MS = 200;
+    private static final long REINDEX_RESPONSE_TIMEOUT_MS = 200L;
 
     @BeforeAll
     static void setUp() throws IOException {
@@ -57,54 +64,58 @@ class EmbeddingClientResponseTimeoutIT {
         registry.add("app.webclient.sla.base-url", () -> server.url("/").toString());
         registry.add("app.webclient.sla.connect-timeout-ms", () -> SLA_CONNECT_TIMEOUT_MS);
         registry.add("app.webclient.sla.response-timeout-ms", () -> String.valueOf(SLA_RESPONSE_TIMEOUT_MS));
+        registry.add("app.webclient.reindex.base-url", () -> server.url("/").toString());
+        registry.add("app.webclient.reindex.connect-timeout-ms", () -> REINDEX_CONNECT_TIMEOUT_MS);
+        registry.add("app.webclient.reindex.response-timeout-ms", () -> String.valueOf(REINDEX_RESPONSE_TIMEOUT_MS));
         // 避免日志截断太长
         registry.add("rag.retrieval.logging.query-preview-length", () -> 16);
     }
 
     @Autowired
     @Qualifier("slaEmbeddingGateway")
-    private SlaEmbeddingGateway embeddingGateway;
+    private SlaEmbeddingGateway slaEmbeddingGateway;
+
+    @Autowired
+    @Qualifier("reindexEmbeddingGateway")
+    private ReindexEmbeddingGateway reindexEmbeddingGateway;
+
+    @Autowired
+    private TimeoutSemanticClassifier timeoutSemanticClassifier;
 
     @Test
     void givenSlowServerWhenEmbedThenClientTimesOutLocally() {
-        server.enqueue(new MockResponse()
-                // 不返回任何响应体，强制触发客户端超时
-                .setSocketPolicy(SocketPolicy.NO_RESPONSE));
+        assertGatewayTimesOutWithinBounds(slaEmbeddingGateway, SLA_RESPONSE_TIMEOUT_MS);
+    }
 
+    @Test
+    void givenSlowServerWhenReindexEmbedThenClientTimesOutLocally() {
+        assertGatewayTimesOutWithinBounds(reindexEmbeddingGateway, REINDEX_RESPONSE_TIMEOUT_MS);
+    }
+
+    private void assertGatewayTimesOutWithinBounds(EmbeddingGateway gateway, long responseTimeoutMs) {
+        int before = server.getRequestCount();
+        enqueueDelayedResponse(responseTimeoutMs);
         long start = System.currentTimeMillis();
-
-        assertThatThrownBy(() -> embeddingGateway.embed("hello world"))
+        assertThatThrownBy(() -> gateway.embed("hello world"))
                 .satisfies(this::assertTimeoutSemantic);
-
         long elapsed = System.currentTimeMillis() - start;
         // 断言在 response-timeout 的有限倍数内返回，未无限阻塞
-        assertThat(elapsed).isLessThan(SLA_RESPONSE_TIMEOUT_MS * 4);
-        assertThat(server.getRequestCount()).isEqualTo(1);
+        assertThat(elapsed).isLessThan(responseTimeoutMs * 4);
+        assertThat(server.getRequestCount() - before).isEqualTo(1);
+    }
+
+    private void enqueueDelayedResponse(long responseTimeoutMs) {
+        server.enqueue(new MockResponse()
+                .setResponseCode(200)
+                .addHeader("Content-Type", "application/json")
+                .setBodyDelay(responseTimeoutMs * 5, java.util.concurrent.TimeUnit.MILLISECONDS)
+                .setBody("{}"));
     }
 
     private void assertTimeoutSemantic(Throwable throwable) {
-        Throwable cursor = throwable;
-        while (cursor != null) {
-            if (cursor instanceof ReadTimeoutException
-                    || cursor instanceof java.util.concurrent.TimeoutException
-                    || cursor instanceof java.net.SocketTimeoutException) {
-                return;
-            }
-            cursor = cursor.getCause();
-        }
-        String msg = throwable.getMessage();
-        if (isTimeoutMessage(msg)) {
-            return;
-        }
-        throw new AssertionError("Expected a timeout-related cause but got: " + throwable);
+        assertThat(timeoutSemanticClassifier.isTimeout(throwable))
+                .as("期待异常链包含超时语义，但实际: %s", throwable)
+                .isTrue();
     }
-
-    private boolean isTimeoutMessage(String msg) {
-        if (msg == null) {
-            return false;
-        }
-        String lower = msg.toLowerCase();
-        return lower.contains("timeout") || lower.contains("timed out");
-    }
-
 }
+
