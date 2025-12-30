@@ -51,8 +51,32 @@
 
 ---
 
+
+### 已知未覆盖的网络行为差异（Known Gaps）
+
+- 当前 I1 的证据验证的是“慢响应场景下 client 本地超时生效”，未细分到 headers/body 级别的计时差异。
+- 当前 I2 的证据验证的是“异常 cause 链包含超时语义”，未强制绑定某一种具体异常类型或包装层级。
+- 若未来出现相关回归或线上异常，可按下述 KG-2 / KG-3 的处置建议增强证据强度。
+
+
+#### KG-2：未校验具体请求内容（仅校验“发生过请求”）
+
+- 现状：当前 I1 / I2 的集成测试主要验证“请求被发出且发生本地超时失败”，未强制校验具体的 HTTP 请求细节（如 method / path / body 结构）。
+- 影响：若未来 SDK 或 Adapter 发生行为变化（例如提前失败、切换 endpoint、payload 结构调整），测试可能仍能证明“发生过请求 + 超时语义成立”，但无法证明“请求内容仍符合 embedding 调用预期”。
+- 取舍说明：请求结构属于 SDK / Adapter 的实现细节，当前阶段验证其稳定性的收益较低，故未纳入 I1/I2 的强制机制条款。
+- 处置建议：若出现相关回归或需要更强证据，可在测试中使用 `takeRequest(...)` 断言 method、path 及 body 中的关键字段（如 query 文本或 embedding 输入字段）。
+
+#### KG-3：超时触发方式未覆盖更极端网络行为（NO_RESPONSE / headersDelay）
+
+- 现状：当前 I1/I2 的证据主要通过“延迟响应（slow response）”场景触发 client 超时（例如延迟 body 返回）。
+- 潜在差异：不同 HTTP client / SDK 对 response-timeout 的计时语义可能存在差异（例如更偏向 headers/首字节语义或读取过程中的 idle 语义）。
+- 影响：在极端情况下，可能出现“headers 已返回但 body 阻塞”而未触发预期超时的行为差异。
+- 取舍说明：上述差异属于较低概率的实现级行为分支，继续穷举验证的边际收益有限，当前未作为必须验证的机制条款。
+- 处置建议：若线上出现相关异常行为，可补充使用 `SocketPolicy.NO_RESPONSE`（完全无响应）或 `setHeadersDelay(...)`（若版本支持）来增强对超时触发稳定性的验证。
+
 ## 约束与说明
 
 - 本文档仅描述 EmbeddingClient 的 Infra 机制假设，不涉及任何具体 UseCase 编排逻辑
 - 本文档中的条款不得并入 UseCase 的 must.md（M*）
 - 若更换 embedding SDK / HTTP client / 超时配置实现，本文档中的条款必须重新验证
+
