@@ -1,6 +1,6 @@
-package com.shawn.aiagent.api.exception;
+package com.shawn.aiagent.domain.common.exception;
 
-import com.shawn.aiagent.api.error.ErrorCode;
+import com.shawn.aiagent.domain.common.error.ErrorCode;
 import lombok.Getter;
 
 /**

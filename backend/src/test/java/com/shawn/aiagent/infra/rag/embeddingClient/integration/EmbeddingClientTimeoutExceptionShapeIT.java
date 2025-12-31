@@ -1,4 +1,4 @@
-package com.shawn.aiagent.infra.rag.embeddingClient;
+package com.shawn.aiagent.infra.rag.embeddingClient.integration;
 
 import com.shawn.aiagent.infra.rag.config.DashScopeEmbeddingConfig;
 import com.shawn.aiagent.infra.rag.config.EmbeddingGatewayWiringConfig;

@@ -1,4 +1,4 @@
-package com.shawn.aiagent.api.exception;
+package com.shawn.aiagent.domain.common.exception;
 
 /**
  * 数据完整性异常

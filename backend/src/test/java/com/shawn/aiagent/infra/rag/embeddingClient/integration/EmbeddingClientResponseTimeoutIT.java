@@ -1,4 +1,4 @@
-package com.shawn.aiagent.infra.rag.embeddingClient;
+package com.shawn.aiagent.infra.rag.embeddingClient.integration;
 
 import com.shawn.aiagent.infra.rag.config.DashScopeEmbeddingConfig;
 import com.shawn.aiagent.infra.rag.config.EmbeddingGatewayWiringConfig;
@@ -16,7 +16,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;

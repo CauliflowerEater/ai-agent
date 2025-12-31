@@ -1,4 +1,4 @@
-package com.shawn.aiagent.api.error;
+package com.shawn.aiagent.domain.common.error;
 
 import lombok.Getter;
 

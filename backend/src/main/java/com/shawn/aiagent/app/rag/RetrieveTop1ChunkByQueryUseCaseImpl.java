@@ -1,7 +1,7 @@
 package com.shawn.aiagent.app.rag;
 
-import com.shawn.aiagent.api.error.ErrorCode;
-import com.shawn.aiagent.api.exception.BusinessException;
+import com.shawn.aiagent.domain.common.error.ErrorCode;
+import com.shawn.aiagent.domain.common.exception.BusinessException;
 import com.shawn.aiagent.domain.rag.RetrievalResult;
 import com.shawn.aiagent.port.rag.EmbeddingGateway;
 import com.shawn.aiagent.port.rag.VectorStoreGateway;

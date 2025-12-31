@@ -1,6 +1,6 @@
 package com.shawn.aiagent.support.response;
 
-import com.shawn.aiagent.api.error.ErrorCode;
+import com.shawn.aiagent.domain.common.error.ErrorCode;
 import lombok.Data;
 
 import java.io.Serializable;

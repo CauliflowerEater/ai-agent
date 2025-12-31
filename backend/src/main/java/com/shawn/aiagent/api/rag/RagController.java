@@ -1,7 +1,7 @@
 package com.shawn.aiagent.api.rag;
 
-import com.shawn.aiagent.api.error.ErrorCode;
-import com.shawn.aiagent.api.exception.BusinessException;
+import com.shawn.aiagent.domain.common.error.ErrorCode;
+import com.shawn.aiagent.domain.common.exception.BusinessException;
 import com.shawn.aiagent.app.rag.PreviewReindexUseCase;
 import com.shawn.aiagent.app.rag.ReindexDocumentsUseCase;
 import com.shawn.aiagent.app.rag.RetrieveTop1ChunkByQueryUseCase;
