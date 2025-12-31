@@ -72,11 +72,9 @@ class EmbeddingClientResponseTimeoutIT {
     }
 
     @Autowired
-    @Qualifier("slaEmbeddingGateway")
     private SlaEmbeddingGateway slaEmbeddingGateway;
 
     @Autowired
-    @Qualifier("reindexEmbeddingGateway")
     private ReindexEmbeddingGateway reindexEmbeddingGateway;
 
     @Autowired
