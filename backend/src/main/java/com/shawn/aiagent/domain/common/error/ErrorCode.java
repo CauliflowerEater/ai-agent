@@ -27,7 +27,13 @@ public enum ErrorCode {
     VECTOR_SEARCH_TIMEOUT(50005, "向量检索超时"),
     EMBEDDING_API_ERROR(50006, "向量化API错误"),
     VECTOR_STORE_ERROR(50007, "向量数据库错误"),
-    TOTAL_TIMEOUT(50008, "检索总超时");
+    TOTAL_TIMEOUT(50008, "检索总超时"),
+
+    // 基础设施 / 下游失败语义（粗粒度分流）
+    UPSTREAM_BUSINESS_ERROR(50020, "下游服务业务异常"),
+    NETWORK_ERROR(50021, "网络异常"),
+    TIMEOUT_ERROR(50022, "下游调用超时"),
+    UNKNOWN_INFRA_ERROR(50023, "未知下游异常");
 
     /**
      * 状态码
